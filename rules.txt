@@ -1,0 +1,34 @@
+rijtjes:
+1: enkel
+2: 2 kleuren
+3: 3 kleuren
+4: 5 in a row (diverse kleuren) (straight)
+5: 5 dezelfde kleur (flush)
+6: 2+3 kleuren (full house)
+7: 1+4 kleuren (4 of a kind)
+8: 5 in a row (zelfde kleur) (straight flush)
+
+punten:
+1..6 enkel
+7,8,9 dubbel
+10,11,12 triple
+13 = 52 punten
+
+termen:
+diamonds:	ruiten
+clubs:		klaver
+hearts:		harten
+spades:		schoppen
+suit: kleur van de kaart (schoppen, ruiten etc) - 1..4
+rank: volgorde van de kaart - 1..13
+hand: hand met kaarten
+deal: de kaarten die op tafel worden gegooid
+deck: complete set kaarten
+bid:  de kaarten die nu op de tafel liggen (waartegen moet worden gespeeld)
+
+bij laatste kaart dit aangeven
+de voorgaande speler moet dan altijd hoogste kaart spelen
+
+laagste kaart begint en moet deze kaart gebruiken
+
+winnaar begint volgende ronde
