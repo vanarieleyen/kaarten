@@ -22,7 +22,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <LaunchingApplication PathPlusParams="/usr/bin/wine -e $(TargetCmdLine)"/>
+        <LaunchingApplication PathPlusParams="/usr/bin/wine $(TargetCmdLine)"/>
       </local>
     </RunParams>
     <RequiredPackages Count="5">
