@@ -4,7 +4,8 @@ object Form1: TForm1
   Top = 250
   Width = 647
   Caption = 'Kaarten'
-  Color = clGreen
+  Color = 5082188
+  OnClick = FormClick
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnPaint = FormPaint
