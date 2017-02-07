@@ -38,9 +38,9 @@ const
   CLUBS 		= 2;
   HEARTS 		= 3;
   SPADES 		= 4;
-  CARDHIGHT	= 312;
+  CARDHEIGHT	= 312;
   CARDWIDTH = 224;
-  HALFCARDHIGHT = round(CARDHIGHT/2);
+  HALFCARDHEIGHT = round(CARDHEIGHT/2);
   HALFCARDWIDTH = round(CARDWIDTH/2);
 
 implementation
@@ -54,7 +54,7 @@ begin
 	deck := TBGRABitmap.Create('images/deck.png');
   mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
   virt := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
-  side := round( sqrt(power(CARDWIDTH, 2) + power(CARDHIGHT, 2)));
+  side := round( sqrt(power(CARDWIDTH, 2) + power(CARDHEIGHT, 2)));
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
@@ -97,8 +97,8 @@ begin
 
   drawCard(0.7, 0, 0, -20, DIAMONDS, 11);
 	drawCard(0.7, 20, 0, -10, SPADES, 12);
-  //drawCard(0.7, 40, 0, 20, HEARTS, 13);
-  //drawCard(0.7, 60, 0, 30, CLUBS, 2);
+  drawCard(0.7, 40, 0, 20, HEARTS, 13);
+  drawCard(0.7, 60, 0, 30, CLUBS, 2);
 
   Canvas.CopyRect(Canvas.ClipRect, virt.Canvas, Canvas.ClipRect); 	// display virtual canvas
 end;
@@ -106,7 +106,7 @@ end;
 
 procedure TForm1.drawCard(scale: double; x, y, angle, suit, rank: integer);
 var
-  bmp: TBGRABitmap;
+  card, bmp: TBGRABitmap;
   ctx: TBGRACanvas2D;
   cx, cy: integer;
 begin
@@ -119,23 +119,24 @@ begin
   cx := floor((rank-1)*(264-rank/15));	// calculate/compensate  the x-pos within the deck
 
   // draw the card on the virtual canvas
+  card := deck.GetPart(Rect(cx-1,cy,CARDWIDTH+cx+1,CARDHEIGHT+cy)) as TBGRABitmap;
 	bmp := TBGRABitmap.Create(side, side, BGRAPixelTransparent);
   ctx := bmp.Canvas2D;
 
   ctx.scale(scale);
-  ctx.translate(round((side-CARDWIDTH)/2)+HALFCARDWIDTH, round((side-CARDHIGHT)/2)+HALFCARDHIGHT);
+  ctx.translate(round((side-CARDWIDTH)/2)+HALFCARDWIDTH, round((side-CARDHEIGHT)/2)+HALFCARDHEIGHT);
   ctx.rotate(degtorad(angle));
-	ctx.drawImage(deck.GetPart(Rect(cx-1,cy,CARDWIDTH+cx+2,CARDHIGHT+cy)) as TBGRABitmap, -HALFCARDWIDTH, -HALFCARDHIGHT, CARDWIDTH, CARDHIGHT);
+  ctx.drawImage(card, -HALFCARDWIDTH, -HALFCARDHEIGHT);
   virt.Canvas2d.drawImage(bmp, x, y);
 
   // draw the mask of the card
 	ctx.fillStyle('rgb('+inttostr(suit*10)+','+inttostr(rank*10)+',0)');
-  ctx.roundRect(-HALFCARDWIDTH, -HALFCARDHIGHT, CARDWIDTH, CARDHIGHT, 10);
+  ctx.roundRect(-HALFCARDWIDTH, -HALFCARDHEIGHT, CARDWIDTH, CARDHEIGHT, 10);
   ctx.fill;
   mask.Canvas2d.drawImage(bmp, x, y);
 
   bmp.Free;
-
+  card.Free;
 end;
 
 procedure TForm1.drawBackground();
@@ -169,8 +170,6 @@ begin
   end;
   tex.Free;
 end;
-
-
 
 end.
 
