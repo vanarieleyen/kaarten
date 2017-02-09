@@ -74,6 +74,7 @@
     </CodeGeneration>
     <Linking>
       <Debugging>
+        <GenerateDebugInfo Value="False"/>
         <UseHeaptrc Value="True"/>
         <UseValgrind Value="True"/>
       </Debugging>
