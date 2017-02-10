@@ -6,8 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Math, Controls, Graphics, Dialogs,
-  ExtCtrls, StdCtrls, Menus, LazLogger, BGRAVirtualScreen,
-  BGRABitmap, BGRABitmapTypes, BGRACanvas2D, BGRALayers, FPimage;
+  ExtCtrls, StdCtrls, Menus, LazLogger, BGRAVirtualScreen, BGRABitmap, BGRABitmapTypes, BGRACanvas2D,
+  BGRALayers, FPimage;
 
 type
 
@@ -21,12 +21,14 @@ type
   end;
 
   TForm1 = class(TForm)
+    IdleTimer1: TIdleTimer;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
     VirtualScreen: TBGRAVirtualScreen;
     Button1: TButton;
     cardlist: TImageList;
     procedure Button1Click(Sender: TObject);
+    procedure IdleTimer1Timer(Sender: TObject);
     procedure MenuItem1Click(Sender: TObject);
     procedure VirtualScreenClick(Sender: TObject);
     procedure VirtualScreenRedraw(Sender: TObject; Bitmap: TBGRABitmap);
@@ -40,7 +42,9 @@ type
     hand: array of THand;
     layers, masks: TBGRALayeredBitmap;
     scale: single;      // the scale of the cards
+    space: integer;     // the space between overlapping cards
     South,West,East,North: TPoint;    // the center-points where the cards of each player are displayed
+    oldsize: integer;     // used to detect windowsize changes
   public
     procedure drawCard(myhand: THand);
     procedure drawHand();
@@ -67,10 +71,12 @@ implementation
 
 { TForm1 }
 
+
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   side := round(sqrt(power(CARDWIDTH, 2) + power(CARDHEIGHT, 2)));
-  background := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
+  background := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
+  setBackground();
 
   layers :=TBGRALayeredBitmap.Create(Screen.Width, Screen.Height);
   masks :=TBGRALayeredBitmap.Create(Screen.Width, Screen.Height);
@@ -83,45 +89,59 @@ begin
   FreeAndNil(masks);
 end;
 
-// redraws the window on a resize
-// repositions and resizes the cards
 procedure TForm1.FormResize(Sender: TObject);
 begin
-  layers.RemoveLayer(0);
-  background := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
-  layers.AddOwnedLayer(background);
-  layers.InsertLayer(0,layers.NbLayers-1);
-  setBackground();
+  idleTimer1.Enabled := false;  // temporarily disable the idle timer (which handles resizes)
+end;
 
-  scale := Width/CARDWIDTH/7;   // rescale the size of the cards
-  South.x := round(Width/2);
-  South.y := Height - CARDHEIGHT;
-  drawHand();
+// reset positions and scale after a resize of the window
+procedure TForm1.IdleTimer1Timer(Sender: TObject);
+begin
+  if Width*Height <> oldsize then begin
+    scale := min(1, Width/CARDWIDTH/6);   // rescale the size of the cards
+    space := round(30*scale);
+    South.x := round(Width/2);
+    South.y := Height - round(CARDHEIGHT*scale);
+    drawHand();
+    oldsize := Width*Height;
+  end;
+end;
+
+procedure TForm1.MenuItem1Click(Sender: TObject);
+begin
+  MenuItem1.Tag := MenuItem1.Tag xor 1;
+  VirtualScreen.RedrawBitmap;
 end;
 
 // select a card on the hand and refresh the display
 procedure TForm1.VirtualScreenClick(Sender: TObject);
 var
   pt: TPoint;
-  id: integer;
+  id, shift: integer;
   pixel: TBGRAPixel;
   mask: TBGRABitmap;
 begin
   mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
   masks.Draw(mask,0,0);
+
+  //////////////////////////////////////////////////////////////
+  // TODO: WHEN CLICKED AT APP INIT IT THROWS AND ERROR BECAUSE THE MASKES ARE NOT THEREE
+  //////////////////////////////////////////////////////////////
+
   pt := ScreenToClient(Mouse.CursorPos);
   pixel := mask.GetPixel(pt.x, pt.y);
   id := pixel.red shr 4;
   FreeAndNil(mask);
   DebugLn(IntToStr(hand[id].suit) + ' ' + IntToStr(hand[id].rank));
 
+  shift := round(40*scale);  // the amount a card shifts out of a deck
   if (hand[id].suit > 0) and (hand[id].rank > 0) then begin
     if hand[id].bid = True then begin
-      hand[id].x -= round(40 * sin(hand[id].angle));
-      hand[id].y += round(40 * cos(hand[id].angle));
+      hand[id].x -= round(shift * sin(hand[id].angle));
+      hand[id].y += round(shift * cos(hand[id].angle));
     end else begin
-      hand[id].x += round(40 * sin(hand[id].angle));
-      hand[id].y -= round(40 * cos(hand[id].angle));
+      hand[id].x += round(shift * sin(hand[id].angle));
+      hand[id].y -= round(shift * cos(hand[id].angle));
     end;
     hand[id].bid := not hand[id].bid;
 
@@ -148,29 +168,20 @@ begin
   setlength(hand, aantal + 1);
   for i := 1 to aantal do begin
     hand[i].id := i;
-    hand[i].x := i*15 +South.x -length(hand)*15;
-    hand[i].y := 100; //Height - round((CARDHEIGHT)*scale);
+    hand[i].x := i; //*space;
+    hand[i].y := 10;
     hand[i].suit := random(4) + 1;
     hand[i].rank := random(13) + 1;
     hand[i].angle := angle;
     hand[i].bid := False;
-    hand[i].layer := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
+    hand[i].layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
     layers.AddOwnedLayer(hand[i].layer);
-    hand[i].mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
+    hand[i].mask := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
     masks.AddOwnedLayer(hand[i].mask);
     angle += step;
   end;
   drawHand();
-  VirtualScreen.RedrawBitmap;
 end;
-
-procedure TForm1.MenuItem1Click(Sender: TObject);
-begin
-  MenuItem1.Tag := MenuItem1.Tag xor 1;
-
-  VirtualScreen.RedrawBitmap;
-end;
-
 
 // displays the content of the virtual canvas on the form
 procedure TForm1.VirtualScreenRedraw(Sender: TObject; Bitmap: TBGRABitmap);
@@ -189,6 +200,7 @@ var
 begin
   for i := 1 to length(hand)-1 do
     drawCard(hand[i]);
+  VirtualScreen.RedrawBitmap;
 end;
 
 // draws a card on the virtual canvas and sets the mask
@@ -197,11 +209,14 @@ procedure TForm1.drawCard(myhand: THand);
 var
   card, bmp: TBGRABitmap;
   ctx: TBGRACanvas2D;
-  newsize: integer;
+  newsize, xpos, ypos: integer;
   pixel: TBGRAPixel;
   bm: TBitmap;
 begin
   newsize := round(side*scale);
+  // calculate the position where to copy the bmp-rect into the layer
+  xpos := South.x-round(newsize/2) - round(length(hand)*space/2) + myhand.x*space;
+  ypos := South.y-round(newsize/2) + myhand.y;
 
   bm := TBitmap.Create;
   cardlist.GetBitmap(myhand.suit*myhand.rank, bm);
@@ -216,7 +231,7 @@ begin
   ctx.rotate(myhand.angle);
   ctx.drawImage(card, -HALFCARDWIDTH, -HALFCARDHEIGHT);
   myhand.layer.FillTransparent;
-  myhand.layer.Canvas2d.drawImage(bmp, myhand.x, myhand.y, newsize, newsize);
+  myhand.layer.Canvas2d.drawImage(bmp, xpos, ypos, newsize, newsize);
 
   // draw the mask of the card
   pixel.red := myhand.id shl 4;
@@ -227,7 +242,7 @@ begin
   ctx.roundRect(-HALFCARDWIDTH, -HALFCARDHEIGHT, CARDWIDTH, CARDHEIGHT, 10);
   ctx.fill;
   myhand.mask.FillTransparent;
-  myhand.mask.Canvas2d.drawImage(bmp, myhand.x, myhand.y, newsize, newsize);
+  myhand.mask.Canvas2d.drawImage(bmp, xpos, ypos, newsize, newsize);
 
   FreeAndNil(bmp);
   FreeAndNil(card);
@@ -246,8 +261,8 @@ begin
   texture := TBGRABitmap.Create(bm, False);
   bm.Free;
 
-  for X := 0 to (Width div texture.Width) do begin
-    for Y := 0 to (Height div texture.Height) do begin
+  for X := 0 to (Screen.Width div texture.Width) do begin
+    for Y := 0 to (Screen.Height div texture.Height) do begin
       background.Canvas2d.drawImage(texture, X * texture.Width, Y * texture.Height);
     end;
   end;
