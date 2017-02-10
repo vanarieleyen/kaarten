@@ -6,8 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Math, Controls, Graphics, Dialogs,
-  ExtCtrls, StdCtrls, LazLogger, BGRAVirtualScreen, BGRABitmap, BGRABitmapTypes,
-  BGRACanvas2D, BGRALayers, FPimage;
+  ExtCtrls, StdCtrls, Menus, LazLogger, BGRAVirtualScreen,
+  BGRABitmap, BGRABitmapTypes, BGRACanvas2D, BGRALayers, FPimage;
 
 type
 
@@ -21,10 +21,13 @@ type
   end;
 
   TForm1 = class(TForm)
+    MainMenu1: TMainMenu;
+    MenuItem1: TMenuItem;
     VirtualScreen: TBGRAVirtualScreen;
     Button1: TButton;
     cardlist: TImageList;
     procedure Button1Click(Sender: TObject);
+    procedure MenuItem1Click(Sender: TObject);
     procedure VirtualScreenClick(Sender: TObject);
     procedure VirtualScreenRedraw(Sender: TObject; Bitmap: TBGRABitmap);
     procedure FormCreate(Sender: TObject);
@@ -33,13 +36,13 @@ type
 
   private
     background: TBGRABitmap;  // the green background
-    mask: TBGRABitmap;  // mask of the drawn hand, used to recognize the selected card
     side: integer;      // canvas size for one card that allows maximum rotation without clipping
-    bm: TBitmap;
     hand: array of THand;
     layers, masks: TBGRALayeredBitmap;
+    scale: single;      // the scale of the cards
+    South,West,East,North: TPoint;    // the center-points where the cards of each player are displayed
   public
-    procedure drawCard(scale: double; myhand: THand);
+    procedure drawCard(myhand: THand);
     procedure drawHand();
     procedure setBackground();
   end;
@@ -56,7 +59,7 @@ const
   CARDWIDTH = 223;
   HALFCARDHEIGHT = round(CARDHEIGHT / 2);
   HALFCARDWIDTH = round(CARDWIDTH / 2);
-  SEGMENT = 80;    // hand is displayed in a circle of 40 degrees
+  SEGMENT = 90;    // hand is displayed in a circle of 90 degrees (max)
 
 implementation
 
@@ -67,20 +70,33 @@ implementation
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   side := round(sqrt(power(CARDWIDTH, 2) + power(CARDHEIGHT, 2)));
-  bm := TBitmap.Create;
   background := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
-  mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
-  layers :=TBGRALayeredBitmap.Create(Width, Height);
-  masks :=TBGRALayeredBitmap.Create(Width, Height);
+
+  layers :=TBGRALayeredBitmap.Create(Screen.Width, Screen.Height);
+  masks :=TBGRALayeredBitmap.Create(Screen.Width, Screen.Height);
   layers.AddOwnedLayer(background);
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
-  FreeAndNil(mask);
-  FreeAndNil(bm);
   FreeAndNil(layers);
   FreeAndNil(masks);
+end;
+
+// redraws the window on a resize
+// repositions and resizes the cards
+procedure TForm1.FormResize(Sender: TObject);
+begin
+  layers.RemoveLayer(0);
+  background := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
+  layers.AddOwnedLayer(background);
+  layers.InsertLayer(0,layers.NbLayers-1);
+  setBackground();
+
+  scale := Width/CARDWIDTH/7;   // rescale the size of the cards
+  South.x := round(Width/2);
+  South.y := Height - CARDHEIGHT;
+  drawHand();
 end;
 
 // select a card on the hand and refresh the display
@@ -89,11 +105,14 @@ var
   pt: TPoint;
   id: integer;
   pixel: TBGRAPixel;
+  mask: TBGRABitmap;
 begin
+  mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
   masks.Draw(mask,0,0);
   pt := ScreenToClient(Mouse.CursorPos);
   pixel := mask.GetPixel(pt.x, pt.y);
   id := pixel.red shr 4;
+  FreeAndNil(mask);
   DebugLn(IntToStr(hand[id].suit) + ' ' + IntToStr(hand[id].rank));
 
   if (hand[id].suit > 0) and (hand[id].rank > 0) then begin
@@ -106,51 +125,31 @@ begin
     end;
     hand[id].bid := not hand[id].bid;
 
-    drawCard(0.7, hand[id]);
+    drawCard(hand[id]);
     VirtualScreen.RedrawBitmap;
   end;
 end;
 
-// displays/hides the mask on the form
+// shuffle
 procedure TForm1.Button1Click(Sender: TObject);
-begin
-  Button1.Tag := Button1.Tag xor 1;
-
-  VirtualScreen.RedrawBitmap;
-end;
-
-
-// displays the content of the virtual canvas on the form
-procedure TForm1.VirtualScreenRedraw(Sender: TObject; Bitmap: TBGRABitmap);
-begin
-  DebugLn('redraw');
-
-  if Button1.Tag = 1 then begin
-    masks.Draw(Bitmap,0,0);         // draw masks of the cards
-  end else begin
-    layers.Draw(Bitmap,0,0);        // draw cards
-  end;
-
-end;
-
-// redraws the background and hand on the form
-procedure TForm1.FormResize(Sender: TObject);
 var
   i, aantal: integer;
   radius, angle, step: double;
 begin
-  setBackground();
+  while masks.NbLayers > 0 do begin
+    masks.RemoveLayer(0);     // remove all masks
+    layers.RemoveLayer(1);    // remove all cards and skip the first (background) layer
+  end;
 
   aantal := 12;
   radius := DegToRad( SEGMENT/12*aantal );
   step := radius / aantal;
   angle := radius / 2 - radius + step / 2;
   setlength(hand, aantal + 1);
-  for i := 1 to aantal do
-  begin
+  for i := 1 to aantal do begin
     hand[i].id := i;
-    hand[i].x := i * 15;
-    hand[i].y := 100;
+    hand[i].x := i*15 +South.x -length(hand)*15;
+    hand[i].y := 100; //Height - round((CARDHEIGHT)*scale);
     hand[i].suit := random(4) + 1;
     hand[i].rank := random(13) + 1;
     hand[i].angle := angle;
@@ -159,12 +158,28 @@ begin
     layers.AddOwnedLayer(hand[i].layer);
     hand[i].mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
     masks.AddOwnedLayer(hand[i].mask);
-
-    layers.MoveLayerDown(layers.NbLayers);
     angle += step;
-    //DebugLn(inttostr(hand[i].suit)+' '+inttostr(hand[i].rank));
   end;
   drawHand();
+  VirtualScreen.RedrawBitmap;
+end;
+
+procedure TForm1.MenuItem1Click(Sender: TObject);
+begin
+  MenuItem1.Tag := MenuItem1.Tag xor 1;
+
+  VirtualScreen.RedrawBitmap;
+end;
+
+
+// displays the content of the virtual canvas on the form
+procedure TForm1.VirtualScreenRedraw(Sender: TObject; Bitmap: TBGRABitmap);
+begin
+  if MenuItem1.Tag = 1 then begin
+    masks.Draw(Bitmap,0,0);         // draw masks of the cards
+  end else begin
+    layers.Draw(Bitmap,0,0);        // draw cards
+  end;
 end;
 
 // draws the complete hand on the virtual canvas
@@ -172,25 +187,26 @@ procedure TForm1.drawHand();
 var
   i: integer;
 begin
-  mask.FillTransparent;
-
   for i := 1 to length(hand)-1 do
-    drawCard(0.7, hand[i]);
+    drawCard(hand[i]);
 end;
 
 // draws a card on the virtual canvas and sets the mask
 // cards and masks are seperate layers
-procedure TForm1.drawCard(scale: double; myhand: THand);
+procedure TForm1.drawCard(myhand: THand);
 var
   card, bmp: TBGRABitmap;
   ctx: TBGRACanvas2D;
   newsize: integer;
   pixel: TBGRAPixel;
+  bm: TBitmap;
 begin
   newsize := round(side*scale);
 
+  bm := TBitmap.Create;
   cardlist.GetBitmap(myhand.suit*myhand.rank, bm);
   card := TBGRABitmap.Create(bm, False);
+  bm.Free;
 
   // draw the card on the virtual canvas
   bmp := TBGRABitmap.Create(side, side, BGRAPixelTransparent);
@@ -223,9 +239,12 @@ procedure TForm1.setBackground();
 var
   X, Y: integer;
   texture: TBGRABitmap;
+  bm: TBitmap;
 begin
+  bm := TBitmap.Create;
   cardlist.GetBitmap(0, bm);
   texture := TBGRABitmap.Create(bm, False);
+  bm.Free;
 
   for X := 0 to (Width div texture.Width) do begin
     for Y := 0 to (Height div texture.Height) do begin
