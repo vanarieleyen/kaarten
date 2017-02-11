@@ -8,8 +8,7 @@ uses
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
   Forms, Unit1, pl_bgracontrols, pl_bgrauecontrols, pl_excontrols,
-  pl_exsystem, pl_rx
-  { you can add units after this };
+  pl_exsystem;
 
 {$R *.res}
 

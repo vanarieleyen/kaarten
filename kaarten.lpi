@@ -25,34 +25,28 @@
         <LaunchingApplication PathPlusParams="/usr/bin/wine $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="9">
+    <RequiredPackages Count="7">
       <Item1>
-        <PackageName Value="pl_rx"/>
+        <PackageName Value="pl_exsystem"/>
       </Item1>
       <Item2>
-        <PackageName Value="pl_exsystem"/>
+        <PackageName Value="FCL"/>
       </Item2>
       <Item3>
-        <PackageName Value="FCL"/>
+        <PackageName Value="pl_graphics32"/>
       </Item3>
       <Item4>
-        <PackageName Value="pl_graphics32"/>
+        <PackageName Value="pl_excontrols"/>
       </Item4>
       <Item5>
-        <PackageName Value="pl_excontrols"/>
+        <PackageName Value="pl_BGRAuecontrols"/>
       </Item5>
       <Item6>
-        <PackageName Value="pl_cindy"/>
+        <PackageName Value="pl_bgracontrols"/>
       </Item6>
       <Item7>
-        <PackageName Value="pl_BGRAuecontrols"/>
-      </Item7>
-      <Item8>
-        <PackageName Value="pl_bgracontrols"/>
-      </Item8>
-      <Item9>
         <PackageName Value="LCL"/>
-      </Item9>
+      </Item7>
     </RequiredPackages>
     <Units Count="2">
       <Unit0>

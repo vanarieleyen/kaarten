@@ -126,13 +126,14 @@ begin
 
   //////////////////////////////////////////////////////////////
   // TODO: WHEN CLICKED AT APP INIT IT THROWS AND ERROR BECAUSE THE MASKES ARE NOT THEREE
+  // hand[id].x is altijd 1...12 - dit veroorzaakt de fout met verschuiven
   //////////////////////////////////////////////////////////////
 
   pt := ScreenToClient(Mouse.CursorPos);
   pixel := mask.GetPixel(pt.x, pt.y);
   id := pixel.red shr 4;
   FreeAndNil(mask);
-  DebugLn(IntToStr(hand[id].suit) + ' ' + IntToStr(hand[id].rank));
+  DebugLn(IntToStr(hand[id].suit) + ' ' + IntToStr(hand[id].rank) + ' ' +FloatToStr(hand[id].angle));
 
   shift := round(40*scale);  // the amount a card shifts out of a deck
   if (hand[id].suit > 0) and (hand[id].rank > 0) then begin
@@ -219,7 +220,7 @@ begin
   ypos := South.y-round(newsize/2) + myhand.y;
 
   bm := TBitmap.Create;
-  cardlist.GetBitmap(myhand.suit*myhand.rank, bm);
+  cardlist.GetBitmap((myhand.suit-1)*13 + myhand.rank, bm);
   card := TBGRABitmap.Create(bm, False);
   bm.Free;
 
