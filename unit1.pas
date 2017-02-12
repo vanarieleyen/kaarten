@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Math, Controls, Graphics, Dialogs,
   ExtCtrls, StdCtrls, Menus, LazLogger, BGRAVirtualScreen, BGRABitmap, BGRABitmapTypes, BGRACanvas2D,
-  BGRALayers, FPimage;
+  BGRALayers, FPimage, GR32, GR32_Transforms;
 
 type
 
@@ -71,6 +71,40 @@ implementation
 
 { TForm1 }
 
+
+procedure RotateBitmap(Bmp: TBitmap32; Degs: Integer; AdjustSize: Boolean;
+  BkColor: TColor = clNone; Transparent: Boolean = False); overload;
+var
+  Tmp: TBitmap32;
+  Transformation: TAffineTransformation;
+begin
+  Tmp := TBitmap32.Create;
+  Transformation := TAffineTransformation.Create;
+  try
+    Transformation.BeginUpdate;
+    Transformation.SrcRect := FloatRect(0, 0, Bmp.Width, Bmp.Height);
+    Transformation.Translate(-0.5 * Bmp.Width, -0.5 * Bmp.Height);
+    Transformation.Rotate(0, 0, -Degs);
+    if AdjustSize then
+      with Transformation.GetTransformedBounds do
+        Tmp.SetSize(Round(Right - Left), Round(Bottom - Top))
+    else
+      Tmp.SetSize(Bmp.Width, Bmp.Height);
+    Transformation.Translate(0.5 * Tmp.Width, 0.5 * Tmp.Height);
+    Transformation.EndUpdate;
+    Tmp.Clear(Color32(BkColor));
+    if not Transparent then
+      Bmp.DrawMode := dmTransparent;
+    Transform(Tmp, Bmp, Transformation);
+    Bmp.Assign(Tmp);
+    Bmp.OuterColor := Color32(BkColor);
+    if Transparent then
+      Bmp.DrawMode := dmTransparent;
+  finally
+    Transformation.Free;
+    Tmp.Free;
+  end;
+end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
@@ -169,7 +203,7 @@ begin
   setlength(hand, aantal + 1);
   for i := 1 to aantal do begin
     hand[i].id := i;
-    hand[i].x := i; //*space;
+    hand[i].x := i*space;
     hand[i].y := 10;
     hand[i].suit := random(4) + 1;
     hand[i].rank := random(13) + 1;
@@ -186,9 +220,19 @@ end;
 
 // displays the content of the virtual canvas on the form
 procedure TForm1.VirtualScreenRedraw(Sender: TObject; Bitmap: TBGRABitmap);
+var
+  bmp: TBitmap32;
 begin
   if MenuItem1.Tag = 1 then begin
-    masks.Draw(Bitmap,0,0);         // draw masks of the cards
+    //RotateBitmap(masks. TBitmap32; Degs: Integer; AdjustSize: Boolean;
+  			//BkColor: TColor = clNone; Transparent: Boolean = False);
+    bmp.Create;
+  	masks.Draw(bmp.Canvas, 0, 0);
+    RotateBitmap(bmp, 30, false);
+    //bmp.Draw(0,0,Bitmap as TCustomBitmap32);
+    Bitmap.Canvas.Draw(0,0,bmp.Canvas);
+    //masks.Draw(Bitmap,0,0);         // draw masks of the cards
+    bmp.Free;
   end else begin
     layers.Draw(Bitmap,0,0);        // draw cards
   end;
@@ -208,7 +252,7 @@ end;
 // cards and masks are seperate layers
 procedure TForm1.drawCard(myhand: THand);
 var
-  card, bmp: TBGRABitmap;
+  card, box: TBGRABitmap;
   ctx: TBGRACanvas2D;
   newsize, xpos, ypos: integer;
   pixel: TBGRAPixel;
@@ -216,7 +260,7 @@ var
 begin
   newsize := round(side*scale);
   // calculate the position where to copy the bmp-rect into the layer
-  xpos := South.x-round(newsize/2) - round(length(hand)*space/2) + myhand.x*space;
+  xpos := South.x-round(newsize+length(hand)/2) + myhand.x;
   ypos := South.y-round(newsize/2) + myhand.y;
 
   bm := TBitmap.Create;
@@ -225,14 +269,14 @@ begin
   bm.Free;
 
   // draw the card on the virtual canvas
-  bmp := TBGRABitmap.Create(side, side, BGRAPixelTransparent);
-  ctx := bmp.Canvas2D;
+  box := TBGRABitmap.Create(side, side, BGRAPixelTransparent);
+  ctx := box.Canvas2D;
   ctx.antialiasing := true;
   ctx.translate(round(side / 2), round(side / 2));
   ctx.rotate(myhand.angle);
   ctx.drawImage(card, -HALFCARDWIDTH, -HALFCARDHEIGHT);
   myhand.layer.FillTransparent;
-  myhand.layer.Canvas2d.drawImage(bmp, xpos, ypos, newsize, newsize);
+  myhand.layer.Canvas2d.drawImage(box, xpos, ypos, newsize, newsize);
 
   // draw the mask of the card
   pixel.red := myhand.id shl 4;
@@ -243,9 +287,9 @@ begin
   ctx.roundRect(-HALFCARDWIDTH, -HALFCARDHEIGHT, CARDWIDTH, CARDHEIGHT, 10);
   ctx.fill;
   myhand.mask.FillTransparent;
-  myhand.mask.Canvas2d.drawImage(bmp, xpos, ypos, newsize, newsize);
+  myhand.mask.Canvas2d.drawImage(box, xpos, ypos, newsize, newsize);
 
-  FreeAndNil(bmp);
+  FreeAndNil(box);
   FreeAndNil(card);
 end;
 
