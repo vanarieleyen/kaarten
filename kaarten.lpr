@@ -7,8 +7,8 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, Unit1, pl_bgracontrols, pl_bgrauecontrols, pl_excontrols,
-  pl_exsystem;
+  Forms, Unit1,
+  pl_bgracontrols;
 
 {$R *.res}
 

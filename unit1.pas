@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Math, Controls, Graphics, Dialogs,
   ExtCtrls, StdCtrls, Menus, LazLogger, BGRAVirtualScreen, BGRABitmap, BGRABitmapTypes, BGRACanvas2D,
-  BGRALayers, FPimage, GR32, GR32_Transforms, GR32_Resamplers;
+  BGRALayers, FPimage;
 
 type
 
@@ -128,7 +128,7 @@ begin
     pixel := mask.GetPixel(pt.x, pt.y);
     id := pixel.red shr 4;
     mask.Free;
-    DebugLn(IntToStr(hand[id].suit) + ' ' + IntToStr(hand[id].rank) + ' ' +FloatToStr(hand[id].angle));
+    DebugLn(IntToStr(hand[id].suit) + ' ' + IntToStr(hand[id].rank));
 
     shift := round(40*scale);  // the amount a card shifts out of a deck
     if (hand[id].suit > 0) and (hand[id].rank > 0) then begin
@@ -200,7 +200,7 @@ begin
   VirtualScreen.RedrawBitmap;
 end;
 
-// draws a card on the virtual canvas and sets the mask
+// draws a card on the virtual canvas and sets the mask,
 // cards and masks are seperate layers
 procedure TForm1.drawCard(myhand: THand);
 var
@@ -211,14 +211,14 @@ var
   bm: TBitmap;
 begin
   newsize := round(diagonal*scale);
-  // calculate the position where to copy the bmp-rect into the layer
+  // calculate the position where to copy the card into the layer
   xpos := South.x-round(newsize+length(hand)/2) + myhand.x;
   ypos := South.y-round(newsize/2) + myhand.y;
 
   // generate the scaled card bitmap
   bm := TBitmap.Create;
   cardlist.GetBitmap((myhand.suit-1)*13 + myhand.rank, bm);
-  card := TBGRABitmap.Create(bm, False);
+  card := TBGRABitmap.Create(bm, true);
   card.ResampleFilter := rfBestQuality;
   newcard := card.Resample(round(CARDWIDTH*scale), round(CARDHEIGHT*scale)) as TBGRABitmap;
   bm.Free;
