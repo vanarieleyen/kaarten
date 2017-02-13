@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Math, Controls, Graphics, Dialogs,
   ExtCtrls, StdCtrls, Menus, LazLogger, BGRAVirtualScreen, BGRABitmap, BGRABitmapTypes, BGRACanvas2D,
-  BGRALayers, FPimage, GR32, GR32_Transforms;
+  BGRALayers, FPimage, GR32, GR32_Transforms, GR32_Resamplers;
 
 type
 
@@ -71,42 +71,7 @@ implementation
 
 { TForm1 }
 
-
-procedure RotateBitmap(Bmp: TBitmap32; Degs: Integer; AdjustSize: Boolean;
-  BkColor: TColor = clNone; Transparent: Boolean = False); overload;
-var
-  Tmp: TBitmap32;
-  Transformation: TAffineTransformation;
-begin
-  Tmp := TBitmap32.Create;
-  Transformation := TAffineTransformation.Create;
-  try
-    Transformation.BeginUpdate;
-    Transformation.SrcRect := FloatRect(0, 0, Bmp.Width, Bmp.Height);
-    Transformation.Translate(-0.5 * Bmp.Width, -0.5 * Bmp.Height);
-    Transformation.Rotate(0, 0, -Degs);
-    if AdjustSize then
-      with Transformation.GetTransformedBounds do
-        Tmp.SetSize(Round(Right - Left), Round(Bottom - Top))
-    else
-      Tmp.SetSize(Bmp.Width, Bmp.Height);
-    Transformation.Translate(0.5 * Tmp.Width, 0.5 * Tmp.Height);
-    Transformation.EndUpdate;
-    Tmp.Clear(Color32(BkColor));
-    if not Transparent then
-      Bmp.DrawMode := dmTransparent;
-    Transform(Tmp, Bmp, Transformation);
-    Bmp.Assign(Tmp);
-    Bmp.OuterColor := Color32(BkColor);
-    if Transparent then
-      Bmp.DrawMode := dmTransparent;
-  finally
-    Transformation.Free;
-    Tmp.Free;
-  end;
-end;
-
-procedure TForm1.FormCreate(Sender: TObject);
+ procedure TForm1.FormCreate(Sender: TObject);
 begin
   side := round(sqrt(power(CARDWIDTH, 2) + power(CARDHEIGHT, 2)));
   background := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
@@ -220,19 +185,9 @@ end;
 
 // displays the content of the virtual canvas on the form
 procedure TForm1.VirtualScreenRedraw(Sender: TObject; Bitmap: TBGRABitmap);
-var
-  bmp: TBitmap32;
 begin
   if MenuItem1.Tag = 1 then begin
-    //RotateBitmap(masks. TBitmap32; Degs: Integer; AdjustSize: Boolean;
-  			//BkColor: TColor = clNone; Transparent: Boolean = False);
-    //bmp.Create;
-  	//masks.Draw(bmp.Canvas, 0, 0);
-    //RotateBitmap(bmp, 30, false);
-    //bmp.Draw(0,0,Bitmap as TCustomBitmap32);
-//    Bitmap.Canvas.Draw(0,0,bmp.Canvas);
     masks.Draw(Bitmap,0,0);         // draw masks of the cards
-    //bmp.Free;
   end else begin
     layers.Draw(Bitmap,0,0);        // draw cards
   end;
@@ -252,7 +207,7 @@ end;
 // cards and masks are seperate layers
 procedure TForm1.drawCard(myhand: THand);
 var
-  card, box: TBGRABitmap;
+  card, newcard, box: TBGRABitmap;
   ctx: TBGRACanvas2D;
   newsize, xpos, ypos: integer;
   pixel: TBGRAPixel;
@@ -263,20 +218,25 @@ begin
   xpos := South.x-round(newsize+length(hand)/2) + myhand.x;
   ypos := South.y-round(newsize/2) + myhand.y;
 
+  // generate the scaled card bitmap
   bm := TBitmap.Create;
   cardlist.GetBitmap((myhand.suit-1)*13 + myhand.rank, bm);
   card := TBGRABitmap.Create(bm, False);
+  card.ResampleFilter := rfBestQuality;
+  newcard := card.Resample(round(CARDWIDTH*scale), round(CARDHEIGHT*scale)) as TBGRABitmap;
   bm.Free;
 
-  // draw the card on the virtual canvas
-  box := TBGRABitmap.Create(side, side, BGRAPixelTransparent);
+  // draw the card in a rotated box
+  box := TBGRABitmap.Create(newsize, newsize, BGRAPixelTransparent);
   ctx := box.Canvas2D;
   ctx.antialiasing := true;
-  ctx.translate(round(side / 2), round(side / 2));
+  ctx.translate(round(newsize / 2), round(newsize / 2));
   ctx.rotate(myhand.angle);
-  ctx.drawImage(card, -HALFCARDWIDTH, -HALFCARDHEIGHT);
+  ctx.drawImage(newcard, -HALFCARDWIDTH*scale, -HALFCARDHEIGHT*scale);
+
+  // draw the box with card in a virtual layer
   myhand.layer.FillTransparent;
-  myhand.layer.Canvas2d.drawImage(box, xpos, ypos, newsize, newsize);
+  myhand.layer.Canvas2d.drawImage(box, xpos, ypos);
 
   // draw the mask of the card
   pixel.red := myhand.id shl 4;
@@ -284,13 +244,14 @@ begin
   pixel.green:=myhand.rank shl 4; // not used (only for mask coloring)
   pixel.alpha := 255;
   ctx.fillStyle(pixel);
-  ctx.roundRect(-HALFCARDWIDTH, -HALFCARDHEIGHT, CARDWIDTH, CARDHEIGHT, 10);
+  ctx.roundRect(-HALFCARDWIDTH*scale, -HALFCARDHEIGHT*scale, CARDWIDTH*scale, CARDHEIGHT*scale, 10*scale);
   ctx.fill;
   myhand.mask.FillTransparent;
-  myhand.mask.Canvas2d.drawImage(box, xpos, ypos, newsize, newsize);
+  myhand.mask.Canvas2d.drawImage(box, xpos, ypos);
 
-  FreeAndNil(box);
-  FreeAndNil(card);
+  card.Free;
+  newcard.Free;
+  box.Free;
 end;
 
 // clears the masks and draws the green background on the form
