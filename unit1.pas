@@ -38,7 +38,7 @@ type
 
   private
     background: TBGRABitmap;  // the green background
-    side: integer;      // canvas size for one card that allows maximum rotation without clipping
+    diagonal: integer;      // canvas size for one card that allows maximum rotation without clipping
     hand: array of THand;
     layers, masks: TBGRALayeredBitmap;
     scale: single;      // the scale of the cards
@@ -73,7 +73,7 @@ implementation
 
  procedure TForm1.FormCreate(Sender: TObject);
 begin
-  side := round(sqrt(power(CARDWIDTH, 2) + power(CARDHEIGHT, 2)));
+  diagonal := Ceil(sqrt(power(CARDWIDTH, 2) + power(CARDHEIGHT, 2)));
   background := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
   setBackground();
 
@@ -97,7 +97,7 @@ end;
 procedure TForm1.IdleTimer1Timer(Sender: TObject);
 begin
   if Width*Height <> oldsize then begin
-    scale := min(1, Width/CARDWIDTH/6);   // rescale the size of the cards
+    scale := min(1, Height/CARDHEIGHT/5);   // the size of the cards to make them fit in the window
     space := round(30*scale);
     South.x := round(Width/2);
     South.y := Height - round(CARDHEIGHT*scale);
@@ -120,33 +120,30 @@ var
   pixel: TBGRAPixel;
   mask: TBGRABitmap;
 begin
-  mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
-  masks.Draw(mask,0,0);
+  if (masks.NbLayers > 0) then begin
+    mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
+    masks.Draw(mask,0,0);
 
-  //////////////////////////////////////////////////////////////
-  // TODO: WHEN CLICKED AT APP INIT IT THROWS AND ERROR BECAUSE THE MASKES ARE NOT THEREE
-  // hand[id].x is altijd 1...12 - dit veroorzaakt de fout met verschuiven
-  //////////////////////////////////////////////////////////////
+    pt := ScreenToClient(Mouse.CursorPos);
+    pixel := mask.GetPixel(pt.x, pt.y);
+    id := pixel.red shr 4;
+    mask.Free;
+    DebugLn(IntToStr(hand[id].suit) + ' ' + IntToStr(hand[id].rank) + ' ' +FloatToStr(hand[id].angle));
 
-  pt := ScreenToClient(Mouse.CursorPos);
-  pixel := mask.GetPixel(pt.x, pt.y);
-  id := pixel.red shr 4;
-  FreeAndNil(mask);
-  DebugLn(IntToStr(hand[id].suit) + ' ' + IntToStr(hand[id].rank) + ' ' +FloatToStr(hand[id].angle));
+    shift := round(40*scale);  // the amount a card shifts out of a deck
+    if (hand[id].suit > 0) and (hand[id].rank > 0) then begin
+      if hand[id].bid = True then begin
+        hand[id].x -= round(shift * sin(hand[id].angle));
+        hand[id].y += round(shift * cos(hand[id].angle));
+      end else begin
+        hand[id].x += round(shift * sin(hand[id].angle));
+        hand[id].y -= round(shift * cos(hand[id].angle));
+      end;
+      hand[id].bid := not hand[id].bid;
 
-  shift := round(40*scale);  // the amount a card shifts out of a deck
-  if (hand[id].suit > 0) and (hand[id].rank > 0) then begin
-    if hand[id].bid = True then begin
-      hand[id].x -= round(shift * sin(hand[id].angle));
-      hand[id].y += round(shift * cos(hand[id].angle));
-    end else begin
-      hand[id].x += round(shift * sin(hand[id].angle));
-      hand[id].y -= round(shift * cos(hand[id].angle));
+      drawCard(hand[id]);
+      VirtualScreen.RedrawBitmap;
     end;
-    hand[id].bid := not hand[id].bid;
-
-    drawCard(hand[id]);
-    VirtualScreen.RedrawBitmap;
   end;
 end;
 
@@ -213,7 +210,7 @@ var
   pixel: TBGRAPixel;
   bm: TBitmap;
 begin
-  newsize := round(side*scale);
+  newsize := round(diagonal*scale);
   // calculate the position where to copy the bmp-rect into the layer
   xpos := South.x-round(newsize+length(hand)/2) + myhand.x;
   ypos := South.y-round(newsize/2) + myhand.y;
