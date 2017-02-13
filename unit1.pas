@@ -226,13 +226,13 @@ begin
   if MenuItem1.Tag = 1 then begin
     //RotateBitmap(masks. TBitmap32; Degs: Integer; AdjustSize: Boolean;
   			//BkColor: TColor = clNone; Transparent: Boolean = False);
-    bmp.Create;
-  	masks.Draw(bmp.Canvas, 0, 0);
-    RotateBitmap(bmp, 30, false);
+    //bmp.Create;
+  	//masks.Draw(bmp.Canvas, 0, 0);
+    //RotateBitmap(bmp, 30, false);
     //bmp.Draw(0,0,Bitmap as TCustomBitmap32);
-    Bitmap.Canvas.Draw(0,0,bmp.Canvas);
-    //masks.Draw(Bitmap,0,0);         // draw masks of the cards
-    bmp.Free;
+//    Bitmap.Canvas.Draw(0,0,bmp.Canvas);
+    masks.Draw(Bitmap,0,0);         // draw masks of the cards
+    //bmp.Free;
   end else begin
     layers.Draw(Bitmap,0,0);        // draw cards
   end;
@@ -316,3 +316,4 @@ end;
 
 
 end.
+
