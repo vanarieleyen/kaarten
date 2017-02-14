@@ -84,35 +84,37 @@ end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
 begin
-  FreeAndNil(layers);
-  FreeAndNil(masks);
+  layers.Free;
+  masks.Free;
 end;
 
+// resets positions and scale during a resize of the window
 procedure TForm1.FormResize(Sender: TObject);
 begin
+  scale := min(1, Height/CARDHEIGHT/5);   // the size of the cards to make them fit in the window
+  space := round(30*scale);
+  South.x := round(Width/2);
+  South.y := Height - round(CARDHEIGHT*scale);
   idleTimer1.Enabled := false;  // temporarily disable the idle timer (which handles resizes)
 end;
 
-// reset positions and scale after a resize of the window
+// draws the screen again (only after resize is finished)
 procedure TForm1.IdleTimer1Timer(Sender: TObject);
 begin
   if Width*Height <> oldsize then begin
-    scale := min(1, Height/CARDHEIGHT/5);   // the size of the cards to make them fit in the window
-    space := round(30*scale);
-    South.x := round(Width/2);
-    South.y := Height - round(CARDHEIGHT*scale);
     drawHand();
     oldsize := Width*Height;
   end;
 end;
 
+// switch screen between mask and cards
 procedure TForm1.MenuItem1Click(Sender: TObject);
 begin
   MenuItem1.Tag := MenuItem1.Tag xor 1;
   VirtualScreen.RedrawBitmap;
 end;
 
-// select a card on the hand and refresh the display
+// select a card in the hand and refresh the display
 procedure TForm1.VirtualScreenClick(Sender: TObject);
 var
   pt: TPoint;
@@ -206,30 +208,36 @@ procedure TForm1.drawCard(myhand: THand);
 var
   card, newcard, box: TBGRABitmap;
   ctx: TBGRACanvas2D;
-  newsize, xpos, ypos: integer;
+  newsize, xpos, ypos, cw, ch, hcw, hch, radius: integer;
   pixel: TBGRAPixel;
   bm: TBitmap;
 begin
   newsize := round(diagonal*scale);
+  cw := round(CARDWIDTH*scale);
+  ch := round(CARDHEIGHT*scale);
+  hcw := round(-HALFCARDWIDTH*scale);
+  hch := round(-HALFCARDHEIGHT*scale);
+  radius := round(10*scale);
+
   // calculate the position where to copy the card into the layer
   xpos := South.x-round(newsize+length(hand)/2) + myhand.x;
   ypos := South.y-round(newsize/2) + myhand.y;
 
-  // generate the scaled card bitmap
+  // generate the scaled card
   bm := TBitmap.Create;
   cardlist.GetBitmap((myhand.suit-1)*13 + myhand.rank, bm);
   card := TBGRABitmap.Create(bm, true);
   card.ResampleFilter := rfBestQuality;
-  newcard := card.Resample(round(CARDWIDTH*scale), round(CARDHEIGHT*scale)) as TBGRABitmap;
+  newcard := card.Resample(cw, ch) as TBGRABitmap;
   bm.Free;
 
   // draw the card in a rotated box
   box := TBGRABitmap.Create(newsize, newsize, BGRAPixelTransparent);
   ctx := box.Canvas2D;
   ctx.antialiasing := true;
-  ctx.translate(round(newsize / 2), round(newsize / 2));
+  ctx.translate(round(newsize / 2), round(newsize / 2));    // center of the box
   ctx.rotate(myhand.angle);
-  ctx.drawImage(newcard, -HALFCARDWIDTH*scale, -HALFCARDHEIGHT*scale);
+  ctx.drawImage(newcard, hcw, hch);
 
   // draw the box with card in a virtual layer
   myhand.layer.FillTransparent;
@@ -241,7 +249,7 @@ begin
   pixel.green:=myhand.rank shl 4; // not used (only for mask coloring)
   pixel.alpha := 255;
   ctx.fillStyle(pixel);
-  ctx.roundRect(-HALFCARDWIDTH*scale, -HALFCARDHEIGHT*scale, CARDWIDTH*scale, CARDHEIGHT*scale, 10*scale);
+  ctx.roundRect(hcw, hch, cw, ch, radius);
   ctx.fill;
   myhand.mask.FillTransparent;
   myhand.mask.Canvas2d.drawImage(box, xpos, ypos);
