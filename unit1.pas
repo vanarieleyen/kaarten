@@ -6,35 +6,44 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Math, Controls, Graphics, Dialogs,
-  ExtCtrls, StdCtrls, Menus, LazLogger, BGRAVirtualScreen, BGRABitmap, BGRABitmapTypes, BGRACanvas2D,
-  BGRALayers, FPimage;
+  ExtCtrls, StdCtrls, Menus, LazLogger, TplPanelUnit,
+  BGRAVirtualScreen, BGRABitmap, BGRABitmapTypes, BGRACanvas2D, BGRALayers, FPimage;
 
 type
 
   { TForm1 }
 
-  THand = record
+  TCard = packed record
     id, x, y, suit, rank: integer;
     angle: double;
-    bid: boolean;
+    deal: boolean;
     layer, mask: TBGRABitmap;
   end;
 
-  TCard = record
-    suit, rank: integer;
+  TPlayer = record
+    name: string;                   // name of the player
+    hand: array of TCard;           // the cards of the player
+    position: TPoint;               // the position where the hand of the player is displayed
   end;
 
   TForm1 = class(TForm)
+    Button2: TButton;
+    Button3: TButton;
     IdleTimer1: TIdleTimer;
     MainMenu1: TMainMenu;
     MenuItem1: TMenuItem;
+    plPanel1: TplPanel;
     VirtualScreen: TBGRAVirtualScreen;
     Button1: TButton;
     cardlist: TImageList;
     procedure Button1Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
     procedure IdleTimer1Timer(Sender: TObject);
     procedure MenuItem1Click(Sender: TObject);
-    procedure VirtualScreenClick(Sender: TObject);
+    procedure VirtualScreenMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure VirtualScreenMouseUp(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
     procedure VirtualScreenRedraw(Sender: TObject; Bitmap: TBGRABitmap);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -43,19 +52,20 @@ type
   private
     background: TBGRABitmap;  // the green background
     diagonal: integer;      // canvas size for one card that allows maximum rotation without clipping
-    hand: array of THand;
     deck: array [0..52] of TCard;
     layers, masks: TBGRALayeredBitmap;
     scale: single;      // the scale of the cards
     space: integer;     // the space between overlapping cards
     shift: integer;     // the amount a card shifts out of a deck
-    South,West,East,North: TPoint;    // the center-points where the cards of each player are displayed
+    South,West,East,North: TPlayer;  // the players at the table
     oldsize: integer;     // used to detect windowsize changes
+    select: integer;      // the clicked card id
   public
-    procedure drawCard(myhand: THand);
-    procedure drawHand();
+    procedure drawCard(mycard: TCard; size: integer);
+    procedure drawHand(player: TPlayer);
     procedure setBackground();
-    procedure fyshuffle();
+    procedure fyshuffle(var cards: array of TCard);
+    procedure swapCard(src, dst: integer);
   end;
 
 var
@@ -101,8 +111,8 @@ begin
   scale := min(1, Height/CARDHEIGHT/5);   // the size of the cards to make them fit in the window
   space := round(30*scale);               // the space between each card
   shift := round(40*scale);  // the amount a card shifts out of a deck
-  South.x := round(Width/2);
-  South.y := Height - round(CARDHEIGHT*scale);
+  South.position.x := round(Width/2);
+  South.position.y := Height - plPanel1.Height - 15 - round(CARDHEIGHT*scale);
   idleTimer1.Enabled := false;  // temporarily disable the idle timer (which handles resizes)
 end;
 
@@ -110,7 +120,8 @@ end;
 procedure TForm1.IdleTimer1Timer(Sender: TObject);
 begin
   if Width*Height <> oldsize then begin
-    drawHand();
+    plPanel1.Left := round((Width-plPanel1.Width)/2);
+    drawHand(South);
     oldsize := Width*Height;
   end;
 end;
@@ -122,51 +133,88 @@ begin
   VirtualScreen.RedrawBitmap;
 end;
 
-// select a card in the hand and refresh the display
-procedure TForm1.VirtualScreenClick(Sender: TObject);
+// start dragging a card
+procedure TForm1.VirtualScreenMouseDown(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
 var
-  pt: TPoint;
-  id: integer;
-  pixel: TBGRAPixel;
   mask: TBGRABitmap;
 begin
   if (masks.NbLayers > 0) then begin
+    VirtualScreen.Cursor := crDrag;
+    Application.ProcessMessages;
     mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
     masks.Draw(mask,0,0);
-
-    pt := ScreenToClient(Mouse.CursorPos);
-    pixel := mask.GetPixel(pt.x, pt.y);
-    id := pixel.red shr 4;
+    select := mask.GetPixel(X, Y).red shr 4;
     mask.Free;
-    DebugLn(IntToStr(hand[id].suit) + ' ' + IntToStr(hand[id].rank));
+    DebugLn('down:'+IntToStr(South.hand[select].suit) + ' ' + IntToStr(South.hand[select].rank));
 
-    if (hand[id].suit > 0) and (hand[id].rank > 0) then begin
-      hand[id].bid := not hand[id].bid;
-      drawCard(hand[id]);
+    if (South.hand[select].suit > 0) and (South.hand[select].rank > 0) then begin
+      South.hand[select].deal := not South.hand[select].deal;
+      drawCard(South.hand[select], length(South.hand));
       VirtualScreen.RedrawBitmap;
     end;
   end;
 end;
 
+// stop drag card and swap both cards
+procedure TForm1.VirtualScreenMouseUp(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Integer);
+var
+  mask: TBGRABitmap;
+  id: integer;
+begin
+  if (masks.NbLayers > 0) then begin
+    VirtualScreen.Cursor := crDefault;
+    mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
+    masks.Draw(mask,0,0);
+    id := mask.GetPixel(X, Y).red shr 4;
+    mask.Free;
+    DebugLn('up:'+IntToStr(South.hand[id].suit) + ' ' + IntToStr(South.hand[id].rank));
+
+    if id <> select then begin
+      DebugLn('swap id''s:'+IntToStr(id) + ' ' + IntToStr(select));
+      swapCard(id, select);
+      drawCard(South.hand[select], length(South.hand));
+      drawCard(South.hand[id], length(South.hand));
+      VirtualScreen.RedrawBitmap;
+    end;
+  end;
+end;
+
+// swap 2 cards in the hand
+procedure TForm1.swapCard(src, dst: integer);
+var
+  temp: integer;
+begin
+  South.hand[dst].deal := false;
+  South.hand[src].deal := false;
+  temp := South.hand[src].suit;
+  South.hand[src].suit := South.hand[dst].suit;
+  South.hand[dst].suit := temp;
+  temp := South.hand[src].rank;
+  South.hand[src].rank := South.hand[dst].rank;
+  South.hand[dst].rank := temp;
+end;
+
 // Fisher-Yates shuffle of the deck of cards
-procedure TForm1.fyshuffle();
+procedure TForm1.fyshuffle(var cards: array of TCard);
 var
   m, i: integer;
   temp: TCard;
 begin
   Randomize();
-  for m := length(deck)-1 downto 0 do begin
+  for m := High(cards)-1 downto Low(cards) do begin
     i := Random(m);
-    temp := deck[m];
-    deck[m] := deck[i];
-    deck[i] := temp;
+    temp := cards[m];
+    cards[m] := cards[i];
+    cards[i] := temp;
   end;
 end;
 
 // shuffle
 procedure TForm1.Button1Click(Sender: TObject);
 var
-  i, j, aantal: integer;
+  i, aantal: integer;
   radius, angle, step: double;
 begin
   while masks.NbLayers > 0 do begin
@@ -174,32 +222,53 @@ begin
     layers.RemoveLayer(1);    // remove all cards and skip the first (background) layer
   end;
 
-  for i := 0 to 52 do begin
+  for i := Low(deck) to High(deck) do begin
     deck[i].suit := i div 13 +1;
     deck[i].rank := i mod 13 +1;
   end;
-  fyshuffle();
+  fyshuffle(deck);
 
-  aantal := 12;
-  radius := DegToRad( SEGMENT/12*aantal );  // the radius of the cards in the hand
+  aantal := 13;
+  radius := DegToRad( SEGMENT/13*aantal );  // the radius of the cards in the hand
   step := radius / aantal;
   angle := radius / 2 - radius + step / 2;  // the angle at which to show the card
-  setlength(hand, aantal + 1);
+  setlength(South.hand, aantal + 1);
+  setlength(West.hand, aantal + 1);
+  setlength(North.hand, aantal + 1);
+  setlength(East.hand, aantal + 1);
   for i := 1 to aantal do begin
-    hand[i].id := i;
-    hand[i].x := i;
-    hand[i].y := 10;
-    hand[i].suit := deck[i].suit; //random(4) + 1;
-    hand[i].rank := deck[i].rank; //random(13) + 1;
-    hand[i].angle := angle;
-    hand[i].bid := False;
-    hand[i].layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
-    layers.AddOwnedLayer(hand[i].layer);
-    hand[i].mask := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
-    masks.AddOwnedLayer(hand[i].mask);
+    South.hand[i].id := i;
+    South.hand[i].x := i;
+    South.hand[i].y := 10;
+    South.hand[i].suit := deck[i-1].suit;
+    South.hand[i].rank := deck[i-1].rank;
+    South.hand[i].angle := angle;
+    South.hand[i].deal := False;
+    South.hand[i].layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
+    layers.AddOwnedLayer(South.hand[i].layer);
+    South.hand[i].mask := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
+    masks.AddOwnedLayer(South.hand[i].mask);
     angle += step;
+
+    West.hand[i].suit := deck[i+13-1].suit;
+    West.hand[i].rank := deck[i+13-1].rank;
+
+    North.hand[i].suit := deck[i+26-1].suit;
+    North.hand[i].rank := deck[i+26-1].rank;
+
+    East.hand[i].suit := deck[i+39-1].suit;
+    East.hand[i].rank := deck[i+39-1].rank;
   end;
-  drawHand();
+  drawHand(South);
+end;
+
+procedure TForm1.Button3Click(Sender: TObject);
+var
+  i: integer;
+begin
+  for i := Low(South.hand) to High(South.hand) do begin
+
+  end;
 end;
 
 
@@ -214,18 +283,18 @@ begin
 end;
 
 // draws the complete hand on the virtual canvas
-procedure TForm1.drawHand();
+procedure TForm1.drawHand(player: TPlayer);
 var
   i: integer;
 begin
-  for i := 1 to length(hand)-1 do
-    drawCard(hand[i]);
+  for i := 1 to length(player.hand)-1 do
+    drawCard(player.hand[i], length(player.hand));
   VirtualScreen.RedrawBitmap;
 end;
 
 // draws a card on the virtual canvas and sets the mask,
 // cards and masks are seperate layers
-procedure TForm1.drawCard(myhand: THand);
+procedure TForm1.drawCard(mycard: TCard; size: integer);
 var
   card, newcard, box: TBGRABitmap;
   ctx: TBGRACanvas2D;
@@ -241,16 +310,16 @@ begin
   radius := round(10*scale);            // the radius of the rounded card corners (for drawing the mask)
 
   // calculate the position where to copy the card into the layer
-  xpos := South.x-round(newsize+length(hand)/2) + myhand.x*space;
-  ypos := South.y-round(newsize/2) + myhand.y;
-  if myhand.bid then begin    // modify the position for cards that are shifted out of the deck
-    xpos += round(shift * sin(myhand.angle));
-    ypos -= round(shift * cos(myhand.angle));
+  xpos := South.position.x-round(newsize+size/2) + mycard.x*space;
+  ypos := South.position.y-round(newsize/2) + mycard.y;
+  if mycard.deal then begin    // modify the position for cards that are shifted out of the deck
+    xpos += round(shift * sin(mycard.angle));
+    ypos -= round(shift * cos(mycard.angle));
   end;
 
   // generate the scaled card
   bm := TBitmap.Create;
-  cardlist.GetBitmap((myhand.suit-1)*13 + myhand.rank, bm);
+  cardlist.GetBitmap((mycard.suit-1)*13 + mycard.rank, bm);
   card := TBGRABitmap.Create(bm, true);
   card.ResampleFilter := rfBestQuality;
   newcard := card.Resample(cw, ch) as TBGRABitmap;
@@ -261,23 +330,23 @@ begin
   ctx := box.Canvas2D;
   ctx.antialiasing := true;
   ctx.translate(round(newsize / 2), round(newsize / 2));    // center of the box
-  ctx.rotate(myhand.angle);
+  ctx.rotate(mycard.angle);
   ctx.drawImage(newcard, hcw, hch);
 
   // draw the box with card in a virtual layer
-  myhand.layer.FillTransparent;
-  myhand.layer.Canvas2d.drawImage(box, xpos, ypos);
+  mycard.layer.FillTransparent;
+  mycard.layer.Canvas2d.drawImage(box, xpos, ypos);
 
   // draw the mask of the card
-  pixel.red := myhand.id shl 4;
-  pixel.blue:= myhand.suit shl 4; // not used (only for mask coloring)
-  pixel.green:=myhand.rank shl 4; // not used (only for mask coloring)
+  pixel.red := mycard.id shl 4;
+  pixel.blue:= mycard.suit shl 4; // not used (only for mask coloring)
+  pixel.green:=mycard.rank shl 4; // not used (only for mask coloring)
   pixel.alpha := 255;
   ctx.fillStyle(pixel);
   ctx.roundRect(hcw, hch, cw, ch, radius);
   ctx.fill;
-  myhand.mask.FillTransparent;
-  myhand.mask.Canvas2d.drawImage(box, xpos, ypos);
+  mycard.mask.FillTransparent;
+  mycard.mask.Canvas2d.drawImage(box, xpos, ypos);
 
   card.Free;
   newcard.Free;

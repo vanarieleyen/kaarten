@@ -13,7 +13,7 @@
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos Y="6"/>
-        <UsageCount Value="136"/>
+        <UsageCount Value="153"/>
       </Unit0>
       <Unit1>
         <Filename Value="unit1.pas"/>
@@ -23,9 +23,9 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="Unit1"/>
         <IsVisibleTab Value="True"/>
-        <TopLine Value="149"/>
-        <CursorPos X="7" Y="154"/>
-        <UsageCount Value="136"/>
+        <TopLine Value="261"/>
+        <CursorPos X="5" Y="270"/>
+        <UsageCount Value="153"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -35,7 +35,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="77"/>
         <CursorPos X="9" Y="94"/>
-        <UsageCount Value="3"/>
+        <UsageCount Value="1"/>
       </Unit2>
       <Unit3>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/bgradefaultbitmap.pas"/>
@@ -43,14 +43,14 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="598"/>
         <CursorPos X="32" Y="625"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="7"/>
       </Unit3>
       <Unit4>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/bgracustombitmap.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="689"/>
         <CursorPos Y="705"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="7"/>
       </Unit4>
       <Unit5>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/bgracanvas2d.pas"/>
@@ -58,7 +58,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="179"/>
         <CursorPos X="15" Y="196"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="8"/>
       </Unit5>
       <Unit6>
         <Filename Value="/usr/local/codetyphon/typhon/lcl/graphics.pp"/>
@@ -66,7 +66,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="415"/>
         <CursorPos X="14" Y="425"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="7"/>
       </Unit6>
       <Unit7>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/bgragraphics.pas"/>
@@ -74,7 +74,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="139"/>
         <CursorPos X="3" Y="14"/>
-        <UsageCount Value="3"/>
+        <UsageCount Value="1"/>
       </Unit7>
       <Unit8>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/bgragtkbitmap.pas"/>
@@ -82,25 +82,26 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="104"/>
         <CursorPos Y="121"/>
-        <UsageCount Value="3"/>
+        <UsageCount Value="1"/>
       </Unit8>
       <Unit9>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/bgrapixel.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="239"/>
         <CursorPos X="3" Y="255"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="8"/>
       </Unit9>
       <Unit10>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/csscolorconst.inc"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="23" Y="9"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="5"/>
       </Unit10>
       <Unit11>
         <Filename Value="rules.txt"/>
         <EditorIndex Value="1"/>
-        <UsageCount Value="61"/>
+        <CursorPos Y="11"/>
+        <UsageCount Value="69"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit11>
@@ -108,14 +109,14 @@
         <Filename Value="/usr/local/codetyphon/fpcsrc/rtl/objpas/classes/classesh.inc"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="4" Y="27"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="6"/>
       </Unit12>
       <Unit13>
         <Filename Value="/usr/local/codetyphon/fpcsrc/rtl/unix/classes.pp"/>
         <UnitName Value="Classes"/>
         <EditorIndex Value="-1"/>
         <CursorPos X="3" Y="29"/>
-        <UsageCount Value="5"/>
+        <UsageCount Value="3"/>
       </Unit13>
       <Unit14>
         <Filename Value="/usr/local/codetyphon/fpcsrc/packages/fcl-image/src/fpcanvas.pp"/>
@@ -123,7 +124,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="345"/>
         <CursorPos X="14" Y="361"/>
-        <UsageCount Value="5"/>
+        <UsageCount Value="3"/>
       </Unit14>
       <Unit15>
         <Filename Value="/usr/local/codetyphon/fpcsrc/packages/fcl-image/src/fpimage.pp"/>
@@ -131,14 +132,14 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="3"/>
         <CursorPos X="13" Y="16"/>
-        <UsageCount Value="5"/>
+        <UsageCount Value="3"/>
       </Unit15>
       <Unit16>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_Graphics32/source/GR32_Backends_LCL_Gtk.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="36"/>
         <CursorPos X="14" Y="53"/>
-        <UsageCount Value="7"/>
+        <UsageCount Value="5"/>
       </Unit16>
       <Unit17>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/bgralayers.pas"/>
@@ -146,7 +147,7 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="556"/>
         <CursorPos Y="573"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="7"/>
       </Unit17>
       <Unit18>
         <Filename Value="/usr/local/codetyphon/typhon/lcl/interfaces/win32/win32int.pp"/>
@@ -154,35 +155,35 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="13"/>
         <CursorPos X="3" Y="31"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="6"/>
       </Unit18>
       <Unit19>
         <Filename Value="/usr/local/codetyphon/fpcsrc/rtl/linux/system.pp"/>
         <UnitName Value="System"/>
         <EditorIndex Value="-1"/>
         <CursorPos Y="22"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="6"/>
       </Unit19>
       <Unit20>
         <Filename Value="/usr/local/codetyphon/fpcsrc/rtl/inc/typshrdh.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="57"/>
         <CursorPos X="3" Y="62"/>
-        <UsageCount Value="8"/>
+        <UsageCount Value="6"/>
       </Unit20>
       <Unit21>
         <Filename Value="/usr/local/codetyphon/fpcsrc/rtl/inc/mathh.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="80"/>
         <CursorPos X="14" Y="95"/>
-        <UsageCount Value="9"/>
+        <UsageCount Value="7"/>
       </Unit21>
       <Unit22>
         <Filename Value="resample.pas"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="102"/>
         <CursorPos X="27" Y="120"/>
-        <UsageCount Value="19"/>
+        <UsageCount Value="17"/>
       </Unit22>
       <Unit23>
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/bgrabitmaptypes.pas"/>
@@ -190,133 +191,137 @@
         <EditorIndex Value="-1"/>
         <TopLine Value="345"/>
         <CursorPos X="15" Y="366"/>
-        <UsageCount Value="10"/>
+        <UsageCount Value="8"/>
       </Unit23>
       <Unit24>
         <Filename Value="/usr/local/codetyphon/fpcsrc/rtl/inc/systemh.inc"/>
         <EditorIndex Value="-1"/>
         <TopLine Value="827"/>
-        <CursorPos X="20" Y="847"/>
-        <UsageCount Value="11"/>
+        <CursorPos X="11" Y="847"/>
+        <UsageCount Value="9"/>
       </Unit24>
     </Units>
-    <JumpHistory Count="29" HistoryIndex="28">
+    <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="unit1.pas"/>
-        <Caret Line="227" Column="19" TopLine="212"/>
+        <Caret Line="130" Column="15" TopLine="129"/>
       </Position1>
       <Position2>
         <Filename Value="unit1.pas"/>
-        <Caret Line="104" TopLine="79"/>
+        <Caret Line="140" Column="39" TopLine="140"/>
       </Position2>
       <Position3>
         <Filename Value="unit1.pas"/>
-        <Caret Line="231" Column="34" TopLine="216"/>
+        <Caret Line="166" Column="84" TopLine="146"/>
       </Position3>
       <Position4>
         <Filename Value="unit1.pas"/>
-        <Caret Line="228" Column="34" TopLine="211"/>
+        <Caret Line="156" TopLine="143"/>
       </Position4>
       <Position5>
         <Filename Value="unit1.pas"/>
-        <Caret Line="227" Column="85" TopLine="211"/>
+        <Caret Line="38" Column="47" TopLine="33"/>
       </Position5>
       <Position6>
         <Filename Value="unit1.pas"/>
-        <Caret Line="224" Column="5" TopLine="217"/>
+        <Caret Line="171" Column="15" TopLine="152"/>
       </Position6>
       <Position7>
         <Filename Value="unit1.pas"/>
-        <Caret Line="236" TopLine="218"/>
+        <Caret Line="188" Column="16" TopLine="160"/>
       </Position7>
       <Position8>
         <Filename Value="unit1.pas"/>
-        <Caret Line="226" Column="85" TopLine="197"/>
+        <Caret Line="168" Column="12" TopLine="158"/>
       </Position8>
       <Position9>
         <Filename Value="unit1.pas"/>
-        <Caret Line="238" Column="81" TopLine="213"/>
+        <Caret Line="190" TopLine="170"/>
       </Position9>
       <Position10>
         <Filename Value="unit1.pas"/>
-        <Caret Line="227" Column="101" TopLine="209"/>
+        <Caret Line="199" Column="34" TopLine="192"/>
       </Position10>
       <Position11>
         <Filename Value="unit1.pas"/>
-        <Caret Line="224" Column="28" TopLine="197"/>
+        <Caret Line="138" Column="20" TopLine="127"/>
       </Position11>
       <Position12>
         <Filename Value="unit1.pas"/>
-        <Caret Line="229" Column="3" TopLine="213"/>
+        <Caret Line="252" Column="9" TopLine="223"/>
       </Position12>
       <Position13>
         <Filename Value="unit1.pas"/>
-        <Caret Line="17" Column="15" TopLine="4"/>
+        <Caret Line="170" Column="26" TopLine="153"/>
       </Position13>
       <Position14>
         <Filename Value="unit1.pas"/>
-        <Caret Line="178" TopLine="178"/>
+        <Caret Line="255" Column="5" TopLine="225"/>
       </Position14>
       <Position15>
         <Filename Value="unit1.pas"/>
-        <Caret Line="163" Column="7" TopLine="143"/>
+        <Caret Line="256" Column="5" TopLine="226"/>
       </Position15>
       <Position16>
         <Filename Value="unit1.pas"/>
-        <Caret Line="164" Column="29" TopLine="147"/>
+        <Caret Line="213" Column="4" TopLine="196"/>
       </Position16>
       <Position17>
         <Filename Value="unit1.pas"/>
-        <Caret Line="161" Column="15" TopLine="146"/>
+        <Caret Line="212" Column="4" TopLine="195"/>
       </Position17>
       <Position18>
         <Filename Value="unit1.pas"/>
-        <Caret Line="162" Column="17" TopLine="148"/>
+        <Caret Line="214" Column="4" TopLine="197"/>
       </Position18>
       <Position19>
         <Filename Value="unit1.pas"/>
-        <Caret Line="181" Column="19" TopLine="148"/>
+        <Caret Line="213" Column="4" TopLine="196"/>
       </Position19>
       <Position20>
         <Filename Value="unit1.pas"/>
-        <Caret Line="155" Column="22" TopLine="138"/>
+        <Caret Line="214" Column="4" TopLine="197"/>
       </Position20>
       <Position21>
         <Filename Value="unit1.pas"/>
-        <Caret Line="156" Column="19" TopLine="139"/>
+        <Caret Line="213" Column="4" TopLine="196"/>
       </Position21>
       <Position22>
         <Filename Value="unit1.pas"/>
-        <Caret Line="161" Column="17" TopLine="140"/>
+        <Caret Line="214" Column="4" TopLine="197"/>
       </Position22>
       <Position23>
         <Filename Value="unit1.pas"/>
-        <Caret Line="185" Column="14" TopLine="163"/>
+        <Caret Line="213" Column="4" TopLine="196"/>
       </Position23>
       <Position24>
         <Filename Value="unit1.pas"/>
-        <Caret Line="314" TopLine="280"/>
+        <Caret Line="13" Column="12"/>
       </Position24>
       <Position25>
         <Filename Value="unit1.pas"/>
-        <Caret Line="47" Column="25" TopLine="37"/>
+        <Caret Line="14" Column="12"/>
       </Position25>
       <Position26>
         <Filename Value="unit1.pas"/>
-        <Caret Line="150" Column="44" TopLine="137"/>
+        <Caret Line="10" Column="21"/>
       </Position26>
       <Position27>
         <Filename Value="unit1.pas"/>
-        <Caret Line="152" Column="30" TopLine="135"/>
+        <Caret Line="121" Column="71" TopLine="100"/>
       </Position27>
       <Position28>
         <Filename Value="unit1.pas"/>
-        <Caret Line="161" Column="25" TopLine="139"/>
+        <Caret Line="122" Column="42" TopLine="105"/>
       </Position28>
       <Position29>
         <Filename Value="unit1.pas"/>
-        <Caret Line="58" Column="15" TopLine="43"/>
+        <Caret Line="114" Column="53" TopLine="98"/>
       </Position29>
+      <Position30>
+        <Filename Value="unit1.pas"/>
+        <Caret Line="115" Column="52" TopLine="98"/>
+      </Position30>
     </JumpHistory>
   </ProjectSession>
 </CONFIG>
