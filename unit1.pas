@@ -26,6 +26,8 @@ type
     position: TPoint;               // the position where the hand of the player is displayed
   end;
 
+  TCompare = function (var hand: array of TCard; i, pivot: Integer): integer;
+
   TForm1 = class(TForm)
     Button2: TButton;
     Button3: TButton;
@@ -66,6 +68,7 @@ type
     procedure setBackground();
     procedure fyshuffle(var cards: array of TCard);
     procedure swapCard(src, dst: integer);
+    procedure QuickSort(L, R: Integer; var hand: array of TCard; Compare: TCompare);
   end;
 
 var
@@ -85,6 +88,8 @@ const
 implementation
 
 {$R *.lfm}
+
+{$include functions.pas}
 
 { TForm1 }
 
@@ -163,51 +168,22 @@ var
   mask: TBGRABitmap;
   id: integer;
 begin
+  VirtualScreen.Cursor := crDefault;
   if (masks.NbLayers > 0) then begin
-    VirtualScreen.Cursor := crDefault;
+
     mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
     masks.Draw(mask,0,0);
     id := mask.GetPixel(X, Y).red shr 4;
     mask.Free;
     DebugLn('up:'+IntToStr(South.hand[id].suit) + ' ' + IntToStr(South.hand[id].rank));
 
-    if id <> select then begin
+    if (id <> select) and (id <> 0) then begin
       DebugLn('swap id''s:'+IntToStr(id) + ' ' + IntToStr(select));
       swapCard(id, select);
       drawCard(South.hand[select], length(South.hand));
       drawCard(South.hand[id], length(South.hand));
       VirtualScreen.RedrawBitmap;
     end;
-  end;
-end;
-
-// swap 2 cards in the hand
-procedure TForm1.swapCard(src, dst: integer);
-var
-  temp: integer;
-begin
-  South.hand[dst].deal := false;
-  South.hand[src].deal := false;
-  temp := South.hand[src].suit;
-  South.hand[src].suit := South.hand[dst].suit;
-  South.hand[dst].suit := temp;
-  temp := South.hand[src].rank;
-  South.hand[src].rank := South.hand[dst].rank;
-  South.hand[dst].rank := temp;
-end;
-
-// Fisher-Yates shuffle of the deck of cards
-procedure TForm1.fyshuffle(var cards: array of TCard);
-var
-  m, i: integer;
-  temp: TCard;
-begin
-  Randomize();
-  for m := High(cards)-1 downto Low(cards) do begin
-    i := Random(m);
-    temp := cards[m];
-    cards[m] := cards[i];
-    cards[i] := temp;
   end;
 end;
 
@@ -259,18 +235,21 @@ begin
     East.hand[i].suit := deck[i+39-1].suit;
     East.hand[i].rank := deck[i+39-1].rank;
   end;
+  Button3.Tag := 0;
+  QuickSort(Low(South.hand), High(South.hand), South.hand, @onRank);
   drawHand(South);
 end;
 
+// sort the hand on rank or suit
 procedure TForm1.Button3Click(Sender: TObject);
-var
-  i: integer;
 begin
-  for i := Low(South.hand) to High(South.hand) do begin
-
-  end;
+  if (Button3.Tag = 0) then
+    QuickSort(Low(South.hand), High(South.hand), South.hand, @onSuit)
+  else
+    QuickSort(Low(South.hand), High(South.hand), South.hand, @onRank);
+  Button3.Tag := not Button3.Tag;
+  drawHand(South);
 end;
-
 
 // displays the content of the virtual canvas on the form
 procedure TForm1.VirtualScreenRedraw(Sender: TObject; Bitmap: TBGRABitmap);
