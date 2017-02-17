@@ -41,6 +41,7 @@ begin
   if ri = 0 then ri := 13;
   if rp = 0 then rp := 13;
 
+  hand[i].deal := false;
   if (ri > rp) then
     Result := 1
   else if (ri = rp) then
@@ -60,6 +61,7 @@ begin
   if ri = 0 then ri := 13;
   if rp = 0 then rp := 13;
 
+  hand[i].deal := false;
   t1 := hand[i].suit*13+ri;
   t2 := hand[p].suit*13+rp;
   Result := t1 - t2;
@@ -98,8 +100,9 @@ var
   i: integer;
 begin
   if player.location=1 then
-    for i := 1 to length(player.hand)-1 do
+    for i := 1 to length(player.hand)-1 do begin
       drawCard(player.hand[i], length(player.hand))
+    end
   else
     drawBack(player);
 end;
@@ -107,49 +110,84 @@ end;
 // draw the back of the cards
 procedure TForm1.drawBack(player: TPlayer);
 var
-  card, hcard, vcard: TBGRABitmap;
+  card, hcard, vcard, box: TBGRABitmap;
   ctx: TBGRACanvas2D;
   newsize, xpos, ypos, cw, ch, hcw, hch, i: integer;
-  pixel: TBGRAPixel;
   bm: TBitmap;
+  radius, step, angle, schaal: single;
+  aantal, ruimte: integer;
 begin
-  newsize := ceil(diagonal*scale);      // the diagonal size of the card (to leave room for rotation)
-  cw := round(CARDWIDTH*scale);         // scaled card width and height
-  ch := round(CARDHEIGHT*scale);
-  hcw := round(-HALFCARDWIDTH*scale);   // scaled half card width and height (negative)
-  hch := round(-HALFCARDHEIGHT*scale);
+  aantal := 13;
+  radius := DegToRad( SEGMENT/13*aantal );  // the radius of the cards in the hand
+  step := radius / aantal;
+  angle := radius / 2 - radius + step / 2;  // the angle at which to show the card
+
+  schaal := scale*0.7;
+  ruimte := round(shift*0.5);
+
+  newsize := ceil(diagonal*schaal);      // the diagonal size of the card (to leave room for rotation)
+  cw := round(CARDWIDTH*schaal);         // scaled card width and height
+  ch := round(CARDHEIGHT*schaal);
+  hcw := round(-HALFCARDWIDTH*schaal);   // scaled half card width and height (negative)
+  hch := round(-HALFCARDHEIGHT*schaal);
 
   // generate the scaled card
   bm := TBitmap.Create;
   cardlist.GetBitmap(53, bm);
   card := TBGRABitmap.Create(bm, true);
-  card.ResampleFilter := rfBestQuality;
+  card.ResampleFilter := rfLinear; //rfBox; //rfBestQuality;
   vcard := card.Resample(cw, ch) as TBGRABitmap;
-  bm.Free;
+  hcard := vcard.RotateCW as TBGRABitmap;
 
   xpos := player.position.x;
   ypos := player.position.y;
 
-  if (player.location mod 2 = 1) then begin   // North
-    xpos -= round((length(player.hand)*shift)/2)+round(cw/2);
-    //player.layer.FillTransparent;
-    for i := Low(player.hand) to High(player.hand)-1 do begin
-       player.layer.Canvas2d.drawImage(vcard, xpos, ypos);
-       xpos += shift;
-    end;
-  end else begin      // East and West
-    hcard := vcard.RotateCW as TBGRABitmap;
-    ypos -= round((length(player.hand)*shift)/2)+cw;
-    //player.layer.FillTransparent;
-    for i := Low(player.hand) to High(player.hand)-1 do begin
-      player.layer.Canvas2d.drawImage(hcard, xpos, ypos);
-      ypos += shift;
-    end;
-    hcard.Free;
-  end;
+  player.layer.FillTransparent;
 
+  // draw the card in a rotated box
+  box := TBGRABitmap.Create(newsize, newsize, BGRAPixelTransparent);
+  ctx := box.Canvas2D;
+  ctx.antialiasing := false;
+  ctx.translate(round(newsize / 2), round(newsize / 2));    // center of the box
+  ctx.rotate(angle);
+
+  case player.location of
+    2: begin  // West
+        ypos -= round((length(player.hand)*ruimte)/2)+cw;
+        for i := Low(player.hand) to High(player.hand)-1 do begin
+          ctx.drawImage(hcard, hch, hcw);
+          player.layer.Canvas2d.drawImage(box, xpos, ypos);
+          ctx.rotate(step);
+          box.FillTransparent;
+          ypos += ruimte;
+        end;
+      end;
+    3: begin // North
+        xpos += round((length(player.hand)*ruimte)/2)-cw;
+        for i := Low(player.hand) to High(player.hand)-1 do begin
+          ctx.drawImage(vcard, hcw, hch);
+          player.layer.Canvas2d.drawImage(box, xpos, ypos);
+          ctx.rotate(step);
+          box.FillTransparent;
+          xpos -= ruimte;
+        end;
+      end;
+    4: begin // East
+        ypos += round((length(player.hand)*ruimte)/2)-cw-round(cw/2);
+        for i := Low(player.hand) to High(player.hand)-1 do begin
+          ctx.drawImage(hcard, hch, hcw);
+          player.layer.Canvas2d.drawImage(box, xpos, ypos);
+          ctx.rotate(step);
+          box.FillTransparent;
+          ypos -= ruimte;
+        end;
+      end;
+  end;
+  box.Free;
+  bm.Free;
   card.Free;
   vcard.Free;
+  hcard.Free;
 end;
 
 // draws a card on the virtual canvas and sets the mask,
@@ -181,14 +219,13 @@ begin
   bm := TBitmap.Create;
   cardlist.GetBitmap((mycard.suit-1)*13 + mycard.rank, bm);
   card := TBGRABitmap.Create(bm, true);
-  card.ResampleFilter := rfBestQuality;
+  card.ResampleFilter := rfLinear; //rfBox; //rfBestQuality;
   newcard := card.Resample(cw, ch) as TBGRABitmap;
-  bm.Free;
 
   // draw the card in a rotated box
   box := TBGRABitmap.Create(newsize, newsize, BGRAPixelTransparent);
   ctx := box.Canvas2D;
-  ctx.antialiasing := true;
+  ctx.antialiasing := false;
   ctx.translate(round(newsize / 2), round(newsize / 2));    // center of the box
   ctx.rotate(mycard.angle);
   ctx.drawImage(newcard, hcw, hch);
@@ -208,6 +245,7 @@ begin
   mycard.mask.FillTransparent;
   mycard.mask.Canvas2d.drawImage(box, xpos, ypos);
 
+  bm.Free;
   card.Free;
   newcard.Free;
   box.Free;

@@ -58,6 +58,7 @@ type
 
   private
     background: TBGRABitmap;  // the green background
+    mask: TBGRABitmap;        // the combinaton of all mask layers (used to find which card is clicked)
     diagonal: integer;        // canvas size for one card that allows maximum rotation without clipping
     layers, masks: TBGRALayeredBitmap;
     scale: single;      // the scale of the cards
@@ -101,6 +102,8 @@ implementation
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   diagonal := Ceil(sqrt(power(CARDWIDTH, 2) + power(CARDHEIGHT, 2)));
+
+  mask := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
   background := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
   setBackground();
 
@@ -113,11 +116,16 @@ procedure TForm1.FormDestroy(Sender: TObject);
 begin
   layers.Free;
   masks.Free;
+  mask.Free;
 end;
 
 // resets positions and scale during a resize of the window
 procedure TForm1.FormResize(Sender: TObject);
 begin
+  // disable the idle timer (will automatically restart after resize and redraw the form)
+  idleTimer1.AutoEnabled := true;
+  idleTimer1.Enabled := false;
+
   scale := min(1, Height/CARDHEIGHT/5);   // the size of the cards to make them fit in the window
   space := round(30*scale);               // the space between each card
   shift := round(40*scale);  // the amount a card shifts out of a deck
@@ -131,10 +139,6 @@ begin
   West.position.y := round(Height/2);
   East.position.x := Width - round(CARDWidth*scale)*2;
   East.position.y := round(Height/2);
-  East.location := 1;
-
-  // disable the idle timer (will automatically restart after resize and redraw the form)
-  idleTimer1.Enabled := false;
 end;
 
 // draws the screen again when the size has changed (only after resize is finished)
@@ -142,14 +146,22 @@ procedure TForm1.IdleTimer1Timer(Sender: TObject);
 begin
   if Width*Height <> oldsize then begin
     plPanel1.Left := round((Width-plPanel1.Width)/2);
-    drawHand(South);
-    drawBack(West);
-    drawBack(North);
-    drawBack(East);
-    VirtualScreen.RedrawBitmap;
+    if Assigned(East.layer) then begin
+      drawHand(South);
+      drawBack(West);
+      drawBack(North);
+      drawBack(East);
+
+      layers.Unfreeze;
+      VirtualScreen.RedrawBitmap;
+      layers.Freeze(0,3);   // background and west, north, east side
+    end;
     oldsize := Width*Height;
   end;
+  idleTimer1.AutoEnabled := false;
+  idleTimer1.Enabled := false;
 end;
+
 
 // switch screen between mask and cards
 procedure TForm1.MenuItem1Click(Sender: TObject);
@@ -161,21 +173,21 @@ end;
 // start dragging a card
 procedure TForm1.VirtualScreenMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
-var
-  mask: TBGRABitmap;
 begin
   if (masks.NbLayers > 0) then begin
     VirtualScreen.Cursor := crDrag;
     Application.ProcessMessages;
-    mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
+
     masks.Draw(mask,0,0);
     select := mask.GetPixel(X, Y).red shr 4;
-    mask.Free;
+
     DebugLn('down:'+IntToStr(South.hand[select].suit) + ' ' + IntToStr(South.hand[select].rank));
 
     if (South.hand[select].suit > 0) and (South.hand[select].rank > 0) then begin
       South.hand[select].deal := not South.hand[select].deal;
+
       drawCard(South.hand[select], length(South.hand));
+      //layers.LinearBlend:=true;
       VirtualScreen.RedrawBitmap;
     end;
   end;
@@ -185,16 +197,13 @@ end;
 procedure TForm1.VirtualScreenMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Integer);
 var
-  mask: TBGRABitmap;
   id: integer;
 begin
   VirtualScreen.Cursor := crDefault;
+  Application.ProcessMessages;
   if (masks.NbLayers > 0) then begin
 
-    mask := TBGRABitmap.Create(Width, Height, BGRAPixelTransparent);
-    masks.Draw(mask,0,0);
     id := mask.GetPixel(X, Y).red shr 4;
-    mask.Free;
     DebugLn('up:'+IntToStr(South.hand[id].suit) + ' ' + IntToStr(South.hand[id].rank));
 
     if (id <> select) and (id <> 0) then begin
@@ -214,12 +223,10 @@ var
   radius, angle, step: double;
   deck: array [0..52] of TCard;
 begin
-  while masks.NbLayers > 0 do begin
+  while layers.NbLayers > 4 do begin
     masks.RemoveLayer(0);     // remove all masks
-    layers.RemoveLayer(1);    // remove all cards and skip the first (background) layer
+    layers.RemoveLayer(4);    // remove all cards except the background and card-back layers
   end;
-  for i:=0 to 3 do            // remove the remaining layers of the back of the cards
-    layers.RemoveLayer(1);
 
   for i := Low(deck) to High(deck) do begin
     deck[i].suit := i div 13 +1;
@@ -235,6 +242,25 @@ begin
   setlength(West.hand, aantal + 1);
   setlength(North.hand, aantal + 1);
   setlength(East.hand, aantal + 1);
+
+  West.hand[i].suit := deck[i+13-1].suit;
+  West.hand[i].rank := deck[i+13-1].rank;
+  West.layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
+  layers.AddOwnedLayer(West.layer, boLinearBlend);
+  West.location := 2;
+
+  North.hand[i].suit := deck[i+26-1].suit;
+  North.hand[i].rank := deck[i+26-1].rank;
+  North.layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
+  layers.AddOwnedLayer(North.layer, boLinearBlend);
+  North.location := 3;
+
+  East.hand[i].suit := deck[i+39-1].suit;
+  East.hand[i].rank := deck[i+39-1].rank;
+  East.layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
+  layers.AddOwnedLayer(East.layer, boLinearBlend);
+  East.location := 4;
+
   for i := 1 to aantal do begin
     South.hand[i].id := i;
     South.hand[i].x := i;
@@ -244,29 +270,11 @@ begin
     South.hand[i].angle := angle;
     South.hand[i].deal := False;
     South.hand[i].layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
-    layers.AddOwnedLayer(South.hand[i].layer);
+    layers.AddOwnedLayer(South.hand[i].layer, boLinearBlend);
     South.hand[i].mask := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
-    masks.AddOwnedLayer(South.hand[i].mask);
+    masks.AddOwnedLayer(South.hand[i].mask, boLinearBlend);
     angle += step;
     South.location := 1;
-
-    West.hand[i].suit := deck[i+13-1].suit;
-    West.hand[i].rank := deck[i+13-1].rank;
-    West.layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
-    layers.AddOwnedLayer(West.layer);
-    West.location := 2;
-
-    North.hand[i].suit := deck[i+26-1].suit;
-    North.hand[i].rank := deck[i+26-1].rank;
-    North.layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
-    layers.AddOwnedLayer(North.layer);
-    North.location := 3;
-
-    East.hand[i].suit := deck[i+39-1].suit;
-    East.hand[i].rank := deck[i+39-1].rank;
-    East.layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
-    layers.AddOwnedLayer(East.layer);
-    East.location := 4;
   end;
   Button3.Tag := 0;
   QuickSort(Low(South.hand), High(South.hand), South.hand, @onRank);
@@ -274,6 +282,9 @@ begin
   drawBack(West);
   drawBack(North);
   drawBack(East);
+
+  layers.Freeze(0,3);   // background and west, north, east side
+
   VirtualScreen.RedrawBitmap;
 end;
 
