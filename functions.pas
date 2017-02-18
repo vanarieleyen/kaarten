@@ -115,7 +115,7 @@ var
   newsize, xpos, ypos, cw, ch, hcw, hch, i: integer;
   bm: TBitmap;
   radius, step, angle, schaal: single;
-  aantal, ruimte: integer;
+  aantal, ruimte, skip: integer;
 begin
   aantal := 13;
   radius := DegToRad( SEGMENT/13*aantal );  // the radius of the cards in the hand
@@ -124,6 +124,7 @@ begin
 
   schaal := scale*0.7;
   ruimte := round(shift*0.5);
+  skip := floor((13-length(player.hand))/2);
 
   newsize := ceil(diagonal*schaal);      // the diagonal size of the card (to leave room for rotation)
   cw := round(CARDWIDTH*schaal);         // scaled card width and height
@@ -150,6 +151,10 @@ begin
   ctx.antialiasing := false;
   ctx.translate(round(newsize / 2), round(newsize / 2));    // center of the box
   ctx.rotate(angle);
+  while skip > 0 do begin
+    skip -= 1;
+    ctx.rotate(step);
+  end;
 
   case player.location of
     2: begin  // West
@@ -163,7 +168,7 @@ begin
         end;
       end;
     3: begin // North
-        xpos += round((length(player.hand)*ruimte)/2)-cw;
+        xpos += round(length(player.hand)/2)+hcw;
         for i := Low(player.hand) to High(player.hand)-1 do begin
           ctx.drawImage(vcard, hcw, hch);
           player.layer.Canvas2d.drawImage(box, xpos, ypos);

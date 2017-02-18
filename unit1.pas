@@ -181,6 +181,7 @@ begin
     masks.Draw(mask,0,0);
     select := mask.GetPixel(X, Y).red shr 4;
 
+    DebugLn(inttostr(select));
     DebugLn('down:'+IntToStr(South.hand[select].suit) + ' ' + IntToStr(South.hand[select].rank));
 
     if (South.hand[select].suit > 0) and (South.hand[select].rank > 0) then begin
@@ -243,20 +244,14 @@ begin
   setlength(North.hand, aantal + 1);
   setlength(East.hand, aantal + 1);
 
-  West.hand[i].suit := deck[i+13-1].suit;
-  West.hand[i].rank := deck[i+13-1].rank;
   West.layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
   layers.AddOwnedLayer(West.layer, boLinearBlend);
   West.location := 2;
 
-  North.hand[i].suit := deck[i+26-1].suit;
-  North.hand[i].rank := deck[i+26-1].rank;
   North.layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
   layers.AddOwnedLayer(North.layer, boLinearBlend);
   North.location := 3;
 
-  East.hand[i].suit := deck[i+39-1].suit;
-  East.hand[i].rank := deck[i+39-1].rank;
   East.layer := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
   layers.AddOwnedLayer(East.layer, boLinearBlend);
   East.location := 4;
@@ -275,7 +270,17 @@ begin
     masks.AddOwnedLayer(South.hand[i].mask, boLinearBlend);
     angle += step;
     South.location := 1;
+
+    West.hand[i].suit := deck[i+13-1].suit;
+    West.hand[i].rank := deck[i+13-1].rank;
+
+    North.hand[i].suit := deck[i+26-1].suit;
+    North.hand[i].rank := deck[i+26-1].rank;
+
+    East.hand[i].suit := deck[i+39-1].suit;
+    East.hand[i].rank := deck[i+39-1].rank;
   end;
+
   Button3.Tag := 0;
   QuickSort(Low(South.hand), High(South.hand), South.hand, @onRank);
   drawHand(South);
