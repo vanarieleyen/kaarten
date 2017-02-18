@@ -44,6 +44,7 @@ type
     Button1: TButton;
     cardlist: TImageList;
     procedure Button1Click(Sender: TObject);
+    procedure Button2Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure IdleTimer1Timer(Sender: TObject);
     procedure MenuItem1Click(Sender: TObject);
@@ -58,6 +59,7 @@ type
 
   private
     background: TBGRABitmap;  // the green background
+    deal: TBGRABitmap;        // the deal (on the center of the table)
     mask: TBGRABitmap;        // the combinaton of all mask layers (used to find which card is clicked)
     diagonal: integer;        // canvas size for one card that allows maximum rotation without clipping
     layers, masks: TBGRALayeredBitmap;
@@ -75,6 +77,7 @@ type
     procedure fyshuffle(var cards: array of TCard);
     procedure swapCard(src, dst: integer);
     procedure QuickSort(L, R: Integer; var hand: array of TCard; Compare: TCompare);
+    procedure putDeal();
   end;
 
 var
@@ -103,6 +106,7 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   diagonal := Ceil(sqrt(power(CARDWIDTH, 2) + power(CARDHEIGHT, 2)));
 
+  deal := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
   mask := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
   background := TBGRABitmap.Create(Screen.Width, Screen.Height, BGRAPixelTransparent);
   setBackground();
@@ -110,6 +114,7 @@ begin
   layers :=TBGRALayeredBitmap.Create(Screen.Width, Screen.Height);
   masks :=TBGRALayeredBitmap.Create(Screen.Width, Screen.Height);
   layers.AddOwnedLayer(background);
+  layers.AddOwnedLayer(deal);
 end;
 
 procedure TForm1.FormDestroy(Sender: TObject);
@@ -188,7 +193,6 @@ begin
       South.hand[select].deal := not South.hand[select].deal;
 
       drawCard(South.hand[select], length(South.hand));
-      //layers.LinearBlend:=true;
       VirtualScreen.RedrawBitmap;
     end;
   end;
@@ -224,9 +228,9 @@ var
   radius, angle, step: double;
   deck: array [0..52] of TCard;
 begin
-  while layers.NbLayers > 4 do begin
+  while layers.NbLayers > 5 do begin
     masks.RemoveLayer(0);     // remove all masks
-    layers.RemoveLayer(4);    // remove all cards except the background and card-back layers
+    layers.RemoveLayer(4);    // remove all cards except the background, deal and card-back layers
   end;
 
   for i := Low(deck) to High(deck) do begin
@@ -288,8 +292,15 @@ begin
   drawBack(North);
   drawBack(East);
 
-  layers.Freeze(0,3);   // background and west, north, east side
+  //layers.Freeze(0,4);   // background and west, north, east side
 
+  VirtualScreen.RedrawBitmap;
+end;
+
+// put a deal of cards on the table
+procedure TForm1.Button2Click(Sender: TObject);
+begin
+  putDeal();
   VirtualScreen.RedrawBitmap;
 end;
 

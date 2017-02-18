@@ -150,11 +150,7 @@ begin
   ctx := box.Canvas2D;
   ctx.antialiasing := false;
   ctx.translate(round(newsize / 2), round(newsize / 2));    // center of the box
-  ctx.rotate(angle);
-  while skip > 0 do begin
-    skip -= 1;
-    ctx.rotate(step);
-  end;
+  ctx.rotate(angle+skip*step);
 
   case player.location of
     2: begin  // West
@@ -254,6 +250,60 @@ begin
   card.Free;
   newcard.Free;
   box.Free;
+end;
+
+// put the deal on the table
+procedure TForm1.putDeal();
+var
+  card, newcard, box: TBGRABitmap;
+  ctx: TBGRACanvas2D;
+  newsize, xpos, ypos, cw, ch, hcw, hch, i: integer;
+  bm: TBitmap;
+  mycard: TCard;
+begin
+  newsize := ceil(diagonal*scale);      // the diagonal size of the card (to leave room for rotation)
+  cw := round(CARDWIDTH*scale);         // scaled card width and height
+  ch := round(CARDHEIGHT*scale);
+  hcw := round(-HALFCARDWIDTH*scale);   // scaled half card width and height (negative)
+  hch := round(-HALFCARDHEIGHT*scale);
+
+  xpos := round(Width/2)-cw;
+  ypos := round(Height/2)-ch;
+  for i := Low(South.hand) to High(South.hand)-1 do begin
+    mycard := South.hand[i+1];
+    if (mycard.deal) then
+      xpos -= shift;
+  end;
+
+  deal.FillTransparent;
+  for i := Low(South.hand) to High(South.hand)-1 do begin
+    mycard := South.hand[i+1];
+    if (mycard.deal) then begin
+      // generate the scaled card
+      bm := TBitmap.Create;
+      cardlist.GetBitmap((mycard.suit-1)*13 + mycard.rank, bm);
+      card := TBGRABitmap.Create(bm, true);
+      card.ResampleFilter := rfLinear;
+      newcard := card.Resample(cw, ch) as TBGRABitmap;
+
+      // draw the card in a rotated box
+      box := TBGRABitmap.Create(newsize, newsize, BGRAPixelTransparent);
+      ctx := box.Canvas2D;
+      ctx.antialiasing := false;
+      ctx.translate(round(newsize / 2), round(newsize / 2));    // center of the box
+      ctx.rotate(degtorad(random(40)-20));
+      ctx.drawImage(newcard, hcw, hch);
+      deal.Canvas2d.drawImage(box, xpos, ypos);
+
+      xpos += 2*shift;
+
+      card.Free;
+      newcard.Free;
+      box.Free;
+      bm.Free;
+    end;
+  end;
+
 end;
 
 // clears the masks and draws the green background on the form
