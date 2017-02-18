@@ -7,13 +7,13 @@
         <Item1 ID="946312240252" Modes="Default" Type="IDEMacro" MacroName="LCLWidgetType" Value="gtk2"/>
       </SessionMatrixOptions>
     </BuildModes>
-    <Units Count="24">
+    <Units Count="25">
       <Unit0>
         <Filename Value="kaarten.lpr"/>
         <IsPartOfProject Value="True"/>
         <EditorIndex Value="-1"/>
         <CursorPos Y="6"/>
-        <UsageCount Value="183"/>
+        <UsageCount Value="184"/>
       </Unit0>
       <Unit1>
         <Filename Value="unit1.pas"/>
@@ -24,7 +24,7 @@
         <UnitName Value="Unit1"/>
         <TopLine Value="172"/>
         <CursorPos X="6" Y="202"/>
-        <UsageCount Value="183"/>
+        <UsageCount Value="184"/>
         <Loaded Value="True"/>
         <LoadedDesigner Value="True"/>
       </Unit1>
@@ -47,8 +47,8 @@
         <Filename Value="/usr/local/codetyphon/typhon/components/pl_BGRAbitmap/source/bgracanvas2d.pas"/>
         <UnitName Value="BGRACanvas2D"/>
         <EditorIndex Value="-1"/>
-        <TopLine Value="291"/>
-        <CursorPos Y="325"/>
+        <TopLine Value="247"/>
+        <CursorPos X="15" Y="263"/>
         <UsageCount Value="11"/>
       </Unit4>
       <Unit5>
@@ -76,7 +76,7 @@
         <Filename Value="rules.txt"/>
         <EditorIndex Value="2"/>
         <CursorPos Y="11"/>
-        <UsageCount Value="85"/>
+        <UsageCount Value="86"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="None"/>
       </Unit8>
@@ -177,11 +177,10 @@
       </Unit21>
       <Unit22>
         <Filename Value="functions.pas"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
-        <TopLine Value="160"/>
-        <CursorPos X="46" Y="171"/>
-        <UsageCount Value="37"/>
+        <TopLine Value="214"/>
+        <CursorPos X="37" Y="236"/>
+        <UsageCount Value="38"/>
         <Loaded Value="True"/>
       </Unit22>
       <Unit23>
@@ -192,6 +191,15 @@
         <CursorPos X="15" Y="49"/>
         <UsageCount Value="11"/>
       </Unit23>
+      <Unit24>
+        <Filename Value="readme.txt"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="3"/>
+        <CursorPos X="41" Y="5"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="None"/>
+      </Unit24>
     </Units>
     <JumpHistory Count="8" HistoryIndex="7">
       <Position1>
