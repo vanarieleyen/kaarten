@@ -4,7 +4,7 @@
     <Version Value="10"/>
     <BuildModes Active="Default">
       <SessionMatrixOptions Count="1">
-        <Item1 ID="946312240252" Modes="Default" Type="IDEMacro" MacroName="LCLWidgetType" Value="gtk2"/>
+        <Item1 ID="720392325591" Modes="Default" Type="IDEMacro" MacroName="LCLWidgetType" Value="win32"/>
       </SessionMatrixOptions>
     </BuildModes>
     <Units Count="25">

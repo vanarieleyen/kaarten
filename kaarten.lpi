@@ -11,7 +11,7 @@
       <Icon Value="0"/>
     </General>
     <MacroValues Count="1">
-      <Macro1 Name="LCLWidgetType" Value="gtk2"/>
+      <Macro1 Name="LCLWidgetType" Value="win32"/>
     </MacroValues>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>
@@ -22,7 +22,7 @@
     <RunParams>
       <local>
         <FormatVersion Value="1"/>
-        <LaunchingApplication PathPlusParams="/usr/bin/wine $(TargetCmdLine)"/>
+        <LaunchingApplication Use="True" PathPlusParams="/usr/bin/wine $(TargetCmdLine)"/>
       </local>
     </RunParams>
     <RequiredPackages Count="4">
@@ -68,7 +68,7 @@
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
-      <TargetOS Value="linux"/>
+      <TargetOS Value="win32"/>
     </CodeGeneration>
     <Linking>
       <Debugging>
